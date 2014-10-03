@@ -1,3 +1,0 @@
-useDynLib(OriGen)
-import(maps, ggplot2)
-exportPattern("^[[:alpha:]]+")
