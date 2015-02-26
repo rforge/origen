@@ -8,31 +8,83 @@
 ConvertPEDData<-function(PlinkFileName,LocationFileName){
 #DataFileName should be the base name of plink ped/map format
 #DataArray[Alleles,SampleSites,NumberSNPs] Gives the grouped data
-#Location file should be space/tab delimited with columns ID,Label,AltLabel,Long,Lat
-	NumberSNPs=1
-	MapFileName=paste(PlinkFileName,".map",sep="")
-	temp=.Fortran("COUNT_NUMBER_LINES",NumberSNPs=as.integer(NumberSNPs),PlinkFileName=as.character(MapFileName),PACKAGE="OriGen")
-	NumberSNPs=temp$NumberSNPs
+#Location file should be space/tab delimited with columns Label,longitude,latitude
+	print("Note: This method assumes each geographical location in the location file has a unique character label in the first column.")
+	print('It also assumes the longitude and latitude columns are labeled "longitude" and "latitude".')
+	MAPFileName=paste(PlinkFileName,".map",sep="")
+	MAPData=read.table(MAPFileName,header=FALSE)
+	NumberSNPs=length(MAPData[[1]])
 	print(c("NumberSNPs",NumberSNPs))
-	print(MapFileName)
 	
-	SampleSites=1
-	temp=.Fortran("COUNT_NUMBER_SAMPLE_SITES",SampleSites=as.integer(SampleSites),LocationFileName=as.character(LocationFileName),PACKAGE="OriGen")
-	SampleSites=temp$SampleSites
-	print(SampleSites)
+	LocationData=read.table(LocationFileName,header=TRUE)
+	SampleSites=nlevels(LocationData[[1]])
+	print(c("SampleSites",SampleSites))
 	
-	DataArray=array((1:(2*SampleSites*NumberSNPs)),c(2,SampleSites,NumberSNPs))
+	PEDFileName=paste(PlinkFileName,".ped",sep="")
+	PEDData=read.table(PEDFileName,header=FALSE)
+	NumberIndividuals=length(PEDData[[1]])
+	
 	DataArray=array(0,c(2,SampleSites,NumberSNPs))
 	SampleCoordinates=array(0,c(SampleSites,2))
-	MembersList=array('xx',SampleSites)
+	MembersList=levels(LocationData[[1]])
+
+	#Here we fill in the DataArray
+	#set up a vector dividing the sample sites
+	SampleSitesLogical=array(FALSE,c(SampleSites,NumberIndividuals))
+	for(i in 1:SampleSites){
+		SampleSitesLogical[i,]=(as.numeric(LocationData[[1]])==i)
+	}
 	
-#the following includes member names in the code, however r cannot pass vectors of strings to fortran... need a fix...	#ResultsRaw=.Fortran("FORMAT_PLINK_DATA",DataArray=as.integer(DataArray),SampleCoordinates=as.double(SampleCoordinates),MembersList=as.character(MembersList),PlinkFileName=as.character(paste(PlinkFileName,".ped",sep="")),LocationFileName=as.character(LocationFileName),SampleSites=as.integer(SampleSites),NumberSNPs=as.integer(NumberSNPs))
+	for(j in 1:NumberSNPs){
+		k=2*j-1
+		bothlevels=union(levels(PEDData[[6+k]]),levels(PEDData[[7+k]]))
+		PEDData[[6+k]]=factor(PEDData[[6+k]],levels=bothlevels)
+		PEDData[[7+k]]=factor(PEDData[[7+k]],levels=bothlevels)
+		
+		counter=1
+		if(length(bothlevels)==3){
+			if(bothlevels[1]=="0"){
+				counter=2
+			}else{
+				stop(paste0("3 alleles found at locus ",j))
+			}
+		}
+		
+		tempLogical61=(as.numeric(PEDData[[6+k]])==counter)
+		tempLogical62=(as.numeric(PEDData[[6+k]])==(counter+1))
+		tempLogical71=(as.numeric(PEDData[[7+k]])==counter)
+		tempLogical72=(as.numeric(PEDData[[7+k]])==(counter+1))
+		for(i in 1:SampleSites){
+			temp1=sum(tempLogical61*(SampleSitesLogical[i,]))
+			temp2=sum(tempLogical71*(SampleSitesLogical[i,]))
+			DataArray[1,i,j]=temp1+temp2
+			temp1=sum(tempLogical62*(SampleSitesLogical[i,]))
+			temp2=sum(tempLogical72*(SampleSitesLogical[i,]))
+			DataArray[2,i,j]=temp1+temp2
+		}
+	}
 	
-ResultsRaw=.Fortran("FORMAT_PLINK_DATA",DataArray=as.integer(DataArray),SampleCoordinates=as.double(SampleCoordinates),PlinkFileName=as.character(paste(PlinkFileName,".ped",sep="")),LocationFileName=as.character(LocationFileName),SampleSites=as.integer(SampleSites),NumberSNPs=as.integer(NumberSNPs),PACKAGE="OriGen")
-	#ResultsRaw=.Fortran("RTRIALS",DataArray=as.integer(DataArray),DataLength=as.integer(c(2,SampleSites,NumberSNPs)))
+	#here we fill in SampleCoordinates
+	foundVector=array(1,SampleSites)
+
+	#first one is free
+	temp=as.numeric(LocationData[[1]])[1]
+	SampleCoordinates[temp,1]=LocationData$longitude[1]
+	SampleCoordinates[temp,2]=LocationData$latitude[1]
+	foundVector[temp]=0
 	
-ResultsRaw$DataArray=array(ResultsRaw$DataArray,c(2,SampleSites,NumberSNPs))
-ResultsRaw$SampleCoordinates=array(ResultsRaw$SampleCoordinates,c(SampleSites,2))
+	for(i in 2:NumberIndividuals){
+		if(sum(foundVector)>0){
+			temp=as.numeric(LocationData[[1]])[i]
+			if(foundVector[temp]){
+				SampleCoordinates[temp,1]=LocationData$longitude[i]
+				SampleCoordinates[temp,2]=LocationData$latitude[i]
+				foundVector[temp]=0
+			}
+		}
+	}
+
+	ResultsRaw=list(DataArray=DataArray,SampleCoordinates=SampleCoordinates,Membership=as.numeric(LocationData[[1]]),MembersList=MembersList,SampleSites=SampleSites,NumberSNPs=NumberSNPs,NumberIndividuals=NumberIndividuals,PEDFileName=PEDFileName,MAPFileName=MAPFileName,LocationFileName=LocationFileName)
 	
 	return(ResultsRaw)
 }
@@ -82,42 +134,100 @@ ResultsRaw$GridCoordinates=array(ResultsRaw$GridCoordinates,c(2,MaxGridLength))
 ConvertUnknownPEDData<-function(PlinkFileName,LocationFileName,PlinkUnknownFileName){
 #DataFileName should be the base name of plink ped/map format
 #DataArray[Alleles,SampleSites,NumberSNPs] Gives the grouped data
-#Location file should be space/tab delimited with columns ID,Label,AltLabel,Long,Lat
+#Location file should be space/tab delimited with columns Label,longitude,latitude
 
-	NumberSNPs=1
-temp=.Fortran("COUNT_NUMBER_LINES",NumberSNPs=as.integer(NumberSNPs),PlinkFileName=as.character(paste(PlinkFileName,".map",sep="")),PACKAGE="OriGen")
-	NumberSNPs=temp$NumberSNPs
+	print("Note: This method assumes each geographical location in the location file has a unique character label in the first column.")
+	print('It also assumes the longitude and latitude columns are labeled "longitude" and "latitude".')
+	MAPFileName=paste(PlinkFileName,".map",sep="")
+	MAPData=read.table(MAPFileName,header=FALSE)
+	NumberSNPs=length(MAPData[[1]])
 	print(c("NumberSNPs",NumberSNPs))
 	
-	NumberKnown=1
-temp=.Fortran("COUNT_NUMBER_LINES",NumberKnown=as.integer(NumberKnown),PlinkFileName=as.character(paste(PlinkFileName,".ped",sep="")),PACKAGE="OriGen")
-	NumberKnown=temp$NumberKnown
-
-	NumberUnknowns=1
-temp=.Fortran("COUNT_NUMBER_LINES",NumberUnknowns=as.integer(NumberUnknowns),PlinkUnknownFileName=as.character(paste(PlinkUnknownFileName,".ped",sep="")),PACKAGE="OriGen")
-	NumberUnknowns=temp$NumberUnknowns
+	LocationData=read.table(LocationFileName,header=TRUE)
+	SampleSites=nlevels(LocationData[[1]])
+	print(c("SampleSites",SampleSites))
 	
-	SampleSites=1
-temp=.Fortran("COUNT_NUMBER_SAMPLE_SITES",SampleSites=as.integer(SampleSites),LocationFileName=as.character(LocationFileName),PACKAGE="OriGen")
-	SampleSites=temp$SampleSites
-	print(SampleSites)
+	PEDFileName=paste(PlinkFileName,".ped",sep="")
+	PEDData=read.table(PEDFileName,header=FALSE)
+	NumberIndividuals=length(PEDData[[1]])
 	
-	DataArray=array((1:(2*SampleSites*NumberSNPs)),c(2,SampleSites,NumberSNPs))
+	UnknownFileName=paste(PlinkUnknownFileName,".ped",sep="")
+	UnknownRawData=read.table(UnknownFileName,header=FALSE)
+	NumberUnknowns=length(UnknownRawData[[1]])
+	
 	DataArray=array(0,c(2,SampleSites,NumberSNPs))
 	SampleCoordinates=array(0,c(SampleSites,2))
-	MembersList=array('xx',SampleSites)
-	Membership=1:NumberKnown
+	MembersList=levels(LocationData[[1]])
+	UnknownData=array(0,c(NumberUnknowns,NumberSNPs))
 	
-#the following includes member names in the code, however r cannot pass vectors of strings to fortran... need a fix...	
-#ResultsRaw=.Fortran("FORMAT_PLINK_DATA",DataArray=as.integer(DataArray),SampleCoordinates=as.double(SampleCoordinates),MembersList=as.character(MembersList),PlinkFileName=as.character(paste(PlinkFileName,".ped",sep="")),LocationFileName=as.character(LocationFileName),SampleSites=as.integer(SampleSites),NumberSNPs=as.integer(NumberSNPs))
-	
-UnknownData=array(0,c(NumberUnknowns,NumberSNPs))
-ResultsRaw=.Fortran("FORMAT_UNKNOWN_PLINK_DATA",DataArray=as.integer(DataArray),SampleCoordinates=as.double(SampleCoordinates),PlinkFileName=as.character(paste(PlinkFileName,".ped",sep="")),LocationFileName=as.character(LocationFileName),SampleSites=as.integer(SampleSites),NumberSNPs=as.integer(NumberSNPs),PlinkUnknownFileName=as.character(paste(PlinkUnknownFileName,".ped",sep="")),NumberUnknowns=as.integer(NumberUnknowns),UnknownData=as.integer(UnknownData),Membership=as.integer(Membership),NumberKnown=as.integer(NumberKnown),PACKAGE="OriGen")
+	#performs a check to see whether there is the same number of SNPs in PlinkFileName and PlinkUnknownFileName
+	if(length(names(UnknownRawData))!=length(names(PEDData))){
+		stop(paste0("Different number of SNPs in ",PlinkFileName, " and ", PlinkUnknownFileName))
+	}
 
-ResultsRaw$DataArray=array(ResultsRaw$DataArray,c(2,SampleSites,NumberSNPs))
-ResultsRaw$SampleCoordinates=array(ResultsRaw$SampleCoordinates,c(SampleSites,2))
-ResultsRaw$UnknownData=array(ResultsRaw$UnknownData,c(NumberUnknowns,NumberSNPs))
+	#Here we fill in the DataArray and UnknownData
+	#set up a vector dividing the sample sites
+	SampleSitesLogical=array(FALSE,c(SampleSites,NumberIndividuals))
+	for(i in 1:SampleSites){
+		SampleSitesLogical[i,]=(as.numeric(LocationData[[1]])==i)
+	}
 	
+	for(j in 1:NumberSNPs){
+		k=2*j-1
+		bothlevels=union(levels(PEDData[[6+k]]),levels(PEDData[[7+k]]))
+		PEDData[[6+k]]=factor(PEDData[[6+k]],levels=bothlevels)
+		PEDData[[7+k]]=factor(PEDData[[7+k]],levels=bothlevels)
+		
+		counter=1
+		if(length(bothlevels)==3){
+			if(bothlevels[1]=="0"){
+				counter=2
+			}else{
+				stop(paste0("3 alleles found at locus ",j))
+			}
+		}
+		
+		tempLogical61=(as.numeric(PEDData[[6+k]])==counter)
+		tempLogical62=(as.numeric(PEDData[[6+k]])==(counter+1))
+		tempLogical71=(as.numeric(PEDData[[7+k]])==counter)
+		tempLogical72=(as.numeric(PEDData[[7+k]])==(counter+1))
+		for(i in 1:SampleSites){
+			temp1=sum(tempLogical61*(SampleSitesLogical[i,]))
+			temp2=sum(tempLogical71*(SampleSitesLogical[i,]))
+			DataArray[1,i,j]=temp1+temp2
+			temp1=sum(tempLogical62*(SampleSitesLogical[i,]))
+			temp2=sum(tempLogical72*(SampleSitesLogical[i,]))
+			DataArray[2,i,j]=temp1+temp2
+		}
+		
+		#Filling in the UnknownData
+		temp1=(UnknownRawData[[6+k]]==bothlevels[counter])
+		temp2=(UnknownRawData[[7+k]]==bothlevels[counter])
+		UnknownData[,j]=temp1+temp2
+	}
+	
+	#here we fill in SampleCoordinates
+	foundVector=array(1,SampleSites)
+
+	#first one is free
+	temp=as.numeric(LocationData[[1]])[1]
+	SampleCoordinates[temp,1]=LocationData$longitude[1]
+	SampleCoordinates[temp,2]=LocationData$latitude[1]
+	foundVector[temp]=0
+	
+	for(i in 2:NumberIndividuals){
+		if(sum(foundVector)>0){
+			temp=as.numeric(LocationData[[1]])[i]
+			if(foundVector[temp]){
+				SampleCoordinates[temp,1]=LocationData$longitude[i]
+				SampleCoordinates[temp,2]=LocationData$latitude[i]
+				foundVector[temp]=0
+			}
+		}
+	}
+	
+	ResultsRaw=list(DataArray=DataArray,UnknownData=UnknownData,SampleCoordinates=SampleCoordinates,Membership=as.numeric(LocationData[[1]]),MembersList=MembersList,SampleSites=SampleSites,NumberSNPs=NumberSNPs,NumberIndividuals=NumberIndividuals,NumberUnknowns=NumberUnknowns,PEDFileName=PEDFileName,MAPFileName=MAPFileName,LocationFileName=LocationFileName)
+
 	return(ResultsRaw)
 }
 
@@ -157,10 +267,10 @@ FitOriGenModelFindUnknowns<-function(DataArray,SampleCoordinates,UnknownData,Max
 	
 	ResultsRaw$UnknownGrids=array(ResultsRaw$UnknownGrids,c(GridLength[1],GridLength[2],NumberUnknowns))
 	ResultsRaw$DataArray=array(ResultsRaw$DataArray,c(2,SampleSites,NumberSNPs))
-ResultsRaw$SampleCoordinates=array(ResultsRaw$SampleCoordinates,c(SampleSites,2))
-ResultsRaw$GridCoordinates=array(ResultsRaw$GridCoordinates,c(2,MaxGridLength))
+	ResultsRaw$SampleCoordinates=array(ResultsRaw$SampleCoordinates,c(SampleSites,2))
+	ResultsRaw$GridCoordinates=array(ResultsRaw$GridCoordinates,c(2,MaxGridLength))
 
-ResultsRaw$UnknownData=array(ResultsRaw$UnknownData,c(NumberUnknowns,NumberSNPs))
+	ResultsRaw$UnknownData=array(ResultsRaw$UnknownData,c(NumberUnknowns,NumberSNPs))
 	
 	return(ResultsRaw)
 }
@@ -178,38 +288,100 @@ FindRhoParameterCrossValidation<-function(PlinkFileName,LocationFileName,MaxIts=
 		stop("MaxIts must be greater than 3")
 	}
 	
-	NumberSNPs=1
-	MapFileName=paste(PlinkFileName,".map",sep="")
-	PedFileName=paste(PlinkFileName,".ped",sep="")
-	temp=.Fortran("COUNT_NUMBER_LINES",NumberSNPs=as.integer(NumberSNPs),PlinkFileName=as.character(MapFileName),PACKAGE="OriGen")
-	NumberSNPs=temp$NumberSNPs
+	print("Note: This method assumes each geographical location in the location file has a unique character label in the first column.")
+	print('It also assumes the longitude and latitude columns are labeled "longitude" and "latitude".')
+	MAPFileName=paste(PlinkFileName,".map",sep="")
+	MAPData=read.table(MAPFileName,header=FALSE)
+	NumberSNPs=length(MAPData[[1]])
 	print(c("NumberSNPs",NumberSNPs))
-	print(MapFileName)
 	
-	SampleSites=1
-	temp=.Fortran("COUNT_NUMBER_SAMPLE_SITES",SampleSites=as.integer(SampleSites),LocationFileName=as.character(LocationFileName),PACKAGE="OriGen")
-	SampleSites=temp$SampleSites
-	print(SampleSites)
+	LocationData=read.table(LocationFileName,header=TRUE)
+	SampleSites=nlevels(LocationData[[1]])
+	print(c("SampleSites",SampleSites))
 	
-	DataArray=array((1:(2*SampleSites*NumberSNPs)),c(2,SampleSites,NumberSNPs))
+	PEDFileName=paste(PlinkFileName,".ped",sep="")
+	PEDData=read.table(PEDFileName,header=FALSE)
+	NumberIndividuals=length(PEDData[[1]])
+	
 	DataArray=array(0,c(2,SampleSites,NumberSNPs))
 	SampleCoordinates=array(0,c(SampleSites,2))
-	MembersList=array('xx',SampleSites)
-	RhoVector=array(0,c(2,MaxIts))
+	MembersList=levels(LocationData[[1]])
 	
-#the following includes member names in the code, however r cannot pass vectors of strings to fortran... need a fix...	
-#ResultsRaw=.Fortran("FORMAT_PLINK_DATA",DataArray=as.integer(DataArray),SampleCoordinates=as.double(SampleCoordinates),MembersList=as.character(MembersList),PlinkFileName=as.character(paste(PlinkFileName,".ped",sep="")),LocationFileName=as.character(LocationFileName),SampleSites=as.integer(SampleSites),NumberSNPs=as.integer(NumberSNPs))
+	NumberUnknowns=NumberIndividuals
+	UnknownData=array(0,c(NumberUnknowns,NumberSNPs))
+	
+	#Here we fill in the DataArray and UnknownData
+	#set up a vector dividing the sample sites
+	SampleSitesLogical=array(FALSE,c(SampleSites,NumberIndividuals))
+	for(i in 1:SampleSites){
+		SampleSitesLogical[i,]=(as.numeric(LocationData[[1]])==i)
+	}
+	
+	for(j in 1:NumberSNPs){
+		k=2*j-1
+		bothlevels=union(levels(PEDData[[6+k]]),levels(PEDData[[7+k]]))
+		PEDData[[6+k]]=factor(PEDData[[6+k]],levels=bothlevels)
+		PEDData[[7+k]]=factor(PEDData[[7+k]],levels=bothlevels)
+		
+		counter=1
+		if(length(bothlevels)==3){
+			if(bothlevels[1]=="0"){
+				counter=2
+			}else{
+				stop(paste0("3 alleles found at locus ",j))
+			}
+		}
+		
+		tempLogical61=(as.numeric(PEDData[[6+k]])==counter)
+		tempLogical62=(as.numeric(PEDData[[6+k]])==(counter+1))
+		tempLogical71=(as.numeric(PEDData[[7+k]])==counter)
+		tempLogical72=(as.numeric(PEDData[[7+k]])==(counter+1))
+		for(i in 1:SampleSites){
+			temp1=sum(tempLogical61*(SampleSitesLogical[i,]))
+			temp2=sum(tempLogical71*(SampleSitesLogical[i,]))
+			DataArray[1,i,j]=temp1+temp2
+			temp1=sum(tempLogical62*(SampleSitesLogical[i,]))
+			temp2=sum(tempLogical72*(SampleSitesLogical[i,]))
+			DataArray[2,i,j]=temp1+temp2
+		}
+		
+		#Filling in the UnknownData
+		temp1=(PEDData[[6+k]]==bothlevels[counter])
+		temp2=(PEDData[[7+k]]==bothlevels[counter])
+		UnknownData[,j]=temp1+temp2
+	}
+	
+	#here we fill in SampleCoordinates
+	foundVector=array(1,SampleSites)
 
-#ResultsRaw=.Fortran("FORMAT_PLINK_DATA",DataArray=as.integer(DataArray),SampleCoordinates=as.double(SampleCoordinates),PlinkFileName=as.character(paste(PlinkFileName,".ped",sep="")),LocationFileName=as.character(LocationFileName),SampleSites=as.integer(SampleSites),NumberSNPs=as.integer(NumberSNPs),PACKAGE="OriGen")
-	#ResultsRaw=.Fortran("RTRIALS",DataArray=as.integer(DataArray),DataLength=as.integer(c(2,SampleSites,NumberSNPs)))
+	#first one is free
+	temp=as.numeric(LocationData[[1]])[1]
+	SampleCoordinates[temp,1]=LocationData$longitude[1]
+	SampleCoordinates[temp,2]=LocationData$latitude[1]
+	foundVector[temp]=0
 	
-ResultsRaw=.Fortran("LEAVE_ONE_POP_OUT_CROSSVAL_SQUARE",PlinkFileName=as.character(PedFileName),LocationFileName=as.character(LocationFileName),NumberSNPs=as.integer(NumberSNPs),MaxIts=as.integer(MaxIts),MaxGridLength=as.integer(MaxGridLength),RhoVector=as.double(RhoVector),RhoParameter=as.double(RhoParameter),SampleSites=as.integer(SampleSites),PACKAGE="OriGen")
+	for(i in 2:NumberIndividuals){
+		if(sum(foundVector)>0){
+			temp=as.numeric(LocationData[[1]])[i]
+			if(foundVector[temp]){
+				SampleCoordinates[temp,1]=LocationData$longitude[i]
+				SampleCoordinates[temp,2]=LocationData$latitude[i]
+				foundVector[temp]=0
+			}
+		}
+	}
 	
-#ResultsRaw$DataArray=array(ResultsRaw$DataArray,c(2,SampleSites,NumberSNPs))
-#ResultsRaw$SampleCoordinates=aperm(array(ResultsRaw$SampleCoordinates,c(2,SampleSites)),c(2,1))
+	RhoVector=array(0,c(2,MaxIts))
+	RhoParameter=1
+	
+#ResultsRaw=.Fortran("LEAVE_ONE_POP_OUT_CROSSVAL_SQUARE",PlinkFileName=as.character(PedFileName),LocationFileName=as.character(LocationFileName),NumberSNPs=as.integer(NumberSNPs),MaxIts=as.integer(MaxIts),MaxGridLength=as.integer(MaxGridLength),RhoVector=as.double(RhoVector),RhoParameter=as.double(RhoParameter),SampleSites=as.integer(SampleSites),PACKAGE="OriGen")
+	
+ResultsRaw=.Fortran("LEAVE_ONE_POP_OUT_CROSSVAL_SQUARE2",DataArray=as.integer(DataArray),SampleCoordinates=as.double(SampleCoordinates),UnknownData=as.double(UnknownData),NumberSNPs=as.integer(NumberSNPs),SampleSites=as.integer(SampleSites),NumberUnknowns=as.integer(NumberUnknowns),MaxIts=as.integer(MaxIts),MaxGridLength=as.integer(MaxGridLength),RhoVector=as.double(RhoVector),RhoParameter=as.double(RhoParameter),PACKAGE="OriGen")
+	
 ResultsRaw$RhoVector=array(RhoVector,(c(2,MaxIts)))
+ResultsRaw2=list(PlinkFileName=PlinkFileName,LocationFileName=LocationFileName,NumberSNPs=as.integer(NumberSNPs),SampleSites=as.integer(SampleSites),NumberUnknowns=as.integer(NumberUnknowns),MaxIts=as.integer(MaxIts),MaxGridLength=as.integer(MaxGridLength),RhoVector=ResultsRaw$RhoVector,RhoParameter=ResultsRaw$RhoParameter)
 	
-	return(ResultsRaw)
+	return(ResultsRaw2)
 }
 
 
@@ -281,6 +453,160 @@ RankSNPsLRT<-function(DataArray){
 	return(ResultsRaw)
 }
 
+
+
+
+ConvertMicrosatData<-function(DataFileName,LocationFileName){
+	print("Note: This method assumes there are two files. DataFileName should have two initial columns, Location Name and Location Number, followed by a single column for each locus.   Each sample is represented by a pair of rows sharing the same Location Name and Location Number giving the two alleles at that locus.  Missing data should be given as -999 and individuals of unknown origin should be given Location Number -1.  The second file, LocationFileName, should have 4 columns: Location Name, Location Number, Latitude, and Longitude.  Both of these files should have headers.")
+
+	#MicrosatData=read.table(DataFileName,header=TRUE)
+	MicrosatData=read.table(DataFileName,header=TRUE,colClasses="factor")
+	MicrosatData[[2]]=as.numeric(levels(MicrosatData[[2]]))[MicrosatData[[2]]]
+	LocationData=read.table(LocationFileName,header=TRUE)
+	NumberLoci=length(MicrosatData)-2
+	#This counts the number of samples in the training dataset (not including the unknowns)
+	NumberUnknowns=sum(MicrosatData[2]==-1)/2
+	SampleSites=(length(MicrosatData[[1]]))/2-NumberUnknowns
+	
+	#This weeds out the unknown individuals.
+	SubMicrosatData=MicrosatData[MicrosatData[[2]]!=-1,]
+
+	AllelesAtLocus=0*1:NumberLoci
+	for(i in 1:NumberLoci){
+		AllelesAtLocus[i]=length(levels(MicrosatData[[i+2]]))
+	}
+	MaxAlleles=max(AllelesAtLocus)
+	DataArray=array(0,c(MaxAlleles,SampleSites,NumberLoci))
+	for(i in 1:NumberLoci){
+		for(j in 1:SampleSites){
+			DataArray[SubMicrosatData[2*j-1,i+2],j,i]=DataArray[SubMicrosatData[2*j-1,i+2],j,i]+1
+			DataArray[SubMicrosatData[2*j,i+2],j,i]=DataArray[SubMicrosatData[2*j,i+2],j,i]+1
+		}
+	}
+
+	SampleCoordinates=array(0,c(SampleSites,2))
+	SampleCoordinates[,1]=LocationData$Longitude
+	SampleCoordinates[,2]=LocationData$Latitude
+
+	SubMicrosatData=MicrosatData[MicrosatData[[2]]==-1,]
+	UnknownDataArray=array(0,c(NumberUnknowns,2,NumberLoci))
+	for(i in 1:NumberLoci){
+		for(j in 1:NumberUnknowns){
+			UnknownDataArray[j,1,i]=as.integer(SubMicrosatData[2*j-1,i+2])
+			UnknownDataArray[j,2,i]=as.integer(SubMicrosatData[2*j,i+2])
+		}
+	}
+	
+	ResultsRaw=list(DataArray=DataArray,SampleCoordinates=SampleCoordinates,AllelesAtLocus=AllelesAtLocus,MaxAlleles=MaxAlleles,SampleSites=SampleSites,NumberLoci=NumberLoci,NumberUnknowns=NumberUnknowns,UnknownDataArray=UnknownDataArray,LocationNames=MicrosatData[[1]],DataFileName=DataFileName,LocationFileName=LocationFileName)
+	
+	return(ResultsRaw)
+}
+
+
+FitMultinomialModel<-function(DataArray,SampleCoordinates,MaxGridLength=20,RhoParameter=10){
+	#DataArray[MaxAlleles,SampleSites,NumberLoci] Gives the grouped data
+	#SampleCoordinates[SampleSites,2] gives the locations of the grouped data
+	#This function takes in the data, fits the model, and returns the allele frequency surfaces
+	if(!.is.wholenumber(MaxGridLength)){
+		stop("MaxGridLength must be an integer")
+	}
+	if(MaxGridLength<=1){
+		stop("MaxGridLength must be greater than 1")
+	}
+	if(RhoParameter<=0){
+		stop("RhoParameter must be greater than 0")
+	}
+	if(length(SampleCoordinates[1,])!=2){
+		stop("SampleCoordinates should give the Long/Lat coordinates of the grouped data so it should only contain 2 columns")
+	}
+	NumberLoci=length(DataArray[1,1,])
+	SampleSites=length(DataArray[1,,1])
+	MaxAlleles=length(DataArray[,1,1])
+
+	GridCoordinates=array(0,c(2,MaxGridLength))
+	GridLength=array(0,2)
+	
+	GridAndCoordResults=.Fortran("UPDATE_GRID_COORD_SQUARE2",GridCoordinates=as.double(GridCoordinates),SampleCoordinates=as.double(SampleCoordinates),GridLength=as.integer(GridLength),MaxGridLength=as.integer(MaxGridLength),SampleSites=as.integer(SampleSites),PACKAGE="OriGen")
+	
+	GridLength=GridAndCoordResults$GridLength
+	GridCoordinates=GridAndCoordResults$GridCoordinates
+	
+	AllelesAtLocus=1:NumberLoci
+	AllelesAtLocus[]=2
+	for(i in 1:NumberLoci){
+		for(j in 1:MaxAlleles){
+			if(sum(DataArray[j,,i])>0.5){
+				AllelesAtLocus[i]=j
+			}
+		}
+	}
+
+	AlleleFrequencySurfaces=array(0.,dim=c(MaxAlleles,GridLength[1],GridLength[2],NumberLoci))
+	ResultsRaw=.Fortran("FITMULTINOMIALMODEL",AlleleFrequencySurfaces=as.double(AlleleFrequencySurfaces),DataArray=as.integer(DataArray),RhoParameter=as.double(RhoParameter),SampleSites=as.integer(SampleSites),GridLength=as.integer(GridLength),MaxGridLength=as.integer(MaxGridLength),MaxAlleles=as.integer(MaxAlleles),NumberLoci=as.integer(NumberLoci),SampleCoordinates=as.double(SampleCoordinates),AllelesAtLocus=as.integer(AllelesAtLocus),GridCoordinates=as.double(GridCoordinates))#,PACKAGE="OriGen")
+
+	ResultsRaw$AlleleFrequencySurfaces=array(ResultsRaw$AlleleFrequencySurfaces,c(MaxAlleles,GridLength[1],GridLength[2],NumberLoci))
+	ResultsRaw$DataArray=array(ResultsRaw$DataArray,c(MaxAlleles,SampleSites,NumberLoci))
+	ResultsRaw$SampleCoordinates=array(ResultsRaw$SampleCoordinates,c(SampleSites,2))
+	ResultsRaw$GridCoordinates=array(ResultsRaw$GridCoordinates,c(2,MaxGridLength))
+	
+	return(ResultsRaw)
+}
+
+
+FitMultinomialModelFindUnknowns<-function(DataArray,SampleCoordinates,UnknownDataArray,MaxGridLength=20,RhoParameter=10){
+	#DataArray[MaxAlleles,SampleSites,NumberLoci] Gives the grouped data
+	#SampleCoordinates[SampleSites,2] gives the locations of the grouped data
+	#This function takes in the data, fits the model, and returns the allele frequency surfaces
+	#UnknownDataArray[NumberUnknowns,2,NumberLoci] gives the unknown data
+	if(!.is.wholenumber(MaxGridLength)){
+		stop("MaxGridLength must be an integer")
+	}
+	if(MaxGridLength<=1){
+		stop("MaxGridLength must be greater than 1")
+	}
+	if(RhoParameter<=0){
+		stop("RhoParameter must be greater than 0")
+	}
+	if(length(SampleCoordinates[1,])!=2){
+		stop("SampleCoordinates should give the Long/Lat coordinates of the grouped data so it should only contain 2 columns")
+	}
+	NumberLoci=length(DataArray[1,1,])
+	SampleSites=length(DataArray[1,,1])
+	MaxAlleles=length(DataArray[,1,1])
+
+	GridCoordinates=array(0,c(2,MaxGridLength))
+	GridLength=array(0,2)
+	
+	GridAndCoordResults=.Fortran("UPDATE_GRID_COORD_SQUARE2",GridCoordinates=as.double(GridCoordinates),SampleCoordinates=as.double(SampleCoordinates),GridLength=as.integer(GridLength),MaxGridLength=as.integer(MaxGridLength),SampleSites=as.integer(SampleSites),PACKAGE="OriGen")
+	
+	GridLength=GridAndCoordResults$GridLength
+	GridCoordinates=GridAndCoordResults$GridCoordinates
+	
+	AllelesAtLocus=1:NumberLoci
+	AllelesAtLocus[]=2
+	for(i in 1:NumberLoci){
+		for(j in 1:MaxAlleles){
+			if(sum(DataArray[j,,i])>0.5){
+				AllelesAtLocus[i]=j
+			}
+		}
+	}
+
+	NumberUnknowns=length(UnknownDataArray[,1,1])
+	UnknownGrids=array(0.,dim=c(GridLength[1],GridLength[2],NumberUnknowns))
+	
+
+	#AlleleFrequencySurfaces=array(0.,dim=c(MaxAlleles,GridLength[1],GridLength[2],NumberLoci))
+	ResultsRaw=.Fortran("FITMULTINOMIALMODELFIND",UnknownGrids=as.double(UnknownGrids),DataArray=as.integer(DataArray),RhoParameter=as.double(RhoParameter),SampleSites=as.integer(SampleSites),GridLength=as.integer(GridLength),MaxGridLength=as.integer(MaxGridLength),MaxAlleles=as.integer(MaxAlleles),NumberLoci=as.integer(NumberLoci),SampleCoordinates=as.double(SampleCoordinates),GridCoordinates=as.double(GridCoordinates),AllelesAtLocus=as.integer(AllelesAtLocus),NumberUnknowns=as.integer(NumberUnknowns),UnknownDataArray=as.integer(UnknownDataArray))#,PACKAGE="OriGen")
+
+	ResultsRaw$UnknownGrids=array(ResultsRaw$UnknownGrids,c(GridLength[1],GridLength[2],NumberUnknowns))
+	ResultsRaw$DataArray=array(ResultsRaw$DataArray,c(MaxAlleles,SampleSites,NumberLoci))
+	ResultsRaw$UnknownDataArray=array(ResultsRaw$UnknownDataArray,c(NumberUnknowns,2,NumberLoci))
+	ResultsRaw$SampleCoordinates=array(ResultsRaw$SampleCoordinates,c(SampleSites,2))
+	ResultsRaw$GridCoordinates=array(ResultsRaw$GridCoordinates,c(2,MaxGridLength))
+	
+	return(ResultsRaw)
+}
 
 
 
@@ -412,6 +738,67 @@ p+	annotation_map(map_data("world"), fill=NA, colour = "white",asp=TRUE)+
 
 
 
+PlotAlleleFrequencySurface2<-function(AlleleSurfaceOutput,LocusNumber=1,AlleleNumber=1,MaskWater=TRUE){
+#AlleleFrequencySurfaces=array(0.,dim=c(MaxAlleles,GridLength[1],GridLength[2],NumberLoci))
+#GridCoordinates(2,MaxGridLength)
+print("Note that the maps package used for vectors here is outdated, this is particularly true in Europe.") 
+#require("maps")
+#require("ggplot2")
+
+if(length(dim(AlleleSurfaceOutput$AlleleFrequencySurfaces))==3){
+	#We are dealing with the SNP case
+	SNPBool=TRUE
+	TempHM=AlleleSurfaceOutput$AlleleFrequencySurfaces[LocusNumber,,]
+}else{
+	#Dealing with markers
+	SNPBool=FALSE
+	TempHM=AlleleSurfaceOutput$AlleleFrequencySurfaces[AlleleNumber,,,LocusNumber]
+}
+
+for(i in 1:AlleleSurfaceOutput$GridLength[1]){
+	TempHM[i,]=AlleleSurfaceOutput$GridCoordinates[1,i]
+}
+
+if(SNPBool){
+	TempOb<-data.frame(Frequency=as.vector(AlleleSurfaceOutput$AlleleFrequencySurfaces[LocusNumber,,]),Long=as.vector(TempHM))
+}else{
+	TempOb<-data.frame(Frequency=as.vector(AlleleSurfaceOutput$AlleleFrequencySurfaces[AlleleNumber,,,LocusNumber]),Long=as.vector(TempHM))
+}
+
+for(i in 1:AlleleSurfaceOutput$GridLength[2]){
+	TempHM[,i]=AlleleSurfaceOutput$GridCoordinates[2,i]
+}
+TempOb$Lat=as.vector(TempHM)
+TempOb$Land=.IsLand(TempOb$Long,TempOb$Lat)
+subdata=subset(TempOb,Land==1)
+#minp=min(subdata$Frequency)
+minp=0
+#maxp=max(subdata$Frequency)
+maxp=1
+if(MaskWater){
+	subdata=subset(TempOb,Land==1)
+	#minp=min(subdata$Frequency)
+	#minp=0
+	#maxp=max(subdata$Frequency)
+	p<-ggplot(subset(TempOb,Land==1),aes(Long,Lat))
+	} else {
+	#minp=min(TempOb$Frequency)
+	#minp=0
+	#maxp=max(TempOb$Frequency)
+	p<-ggplot(TempOb,aes(Long,Lat))
+	}
+p+	annotation_map(map_data("world"), fill=NA, colour = "white",asp=TRUE)+
+	geom_tile(aes(fill=Frequency),colour=NA,alpha=1) +
+	scale_fill_gradient(high = "#CFE8ED",low = "#0F4657",limits=c(minp,maxp)) +
+	annotation_map(map_data("world",boundary=TRUE), fill=NA, colour = "black", bg=par(bg=NA)) + 
+	ylab("Latitude") + ggtitle(paste0("Allele Frequency Surface Locus:",LocusNumber," Allele:",AlleleNumber)) +
+	xlab("Longitude")
+}
+
+
+
+
+
 PlotUnknownHeatMap<-function(HeatMapOutput,UnknownNumber=1,MaskWater=TRUE){
 #GridCoordinates(2,MaxGridLength)
 print("Note that the maps package used for vectors here is outdated, this is particularly true in Europe.") 
@@ -451,6 +838,72 @@ p+	annotation_map(map_data("world"), fill=NA, colour = "white",asp=TRUE)+
 	ylab("Latitude") + ggtitle(paste0("Heat Map Surface Individual:",UnknownNumber)) +
 	xlab("Longitude")
 }
+
+
+#.PlotAllUnknowns<-function(HeatMapOutput,NamesList=NULL,MaskWater=TRUE){
+##GridCoordinates(2,MaxGridLength)
+#print("Note that the maps package used for vectors here is outdated, this is particularly true in Europe.") 
+##require("maps")
+##require("ggplot2")
+
+#NumberUnknowns=HeatMapOutput$
+
+#if(is.null(NamesList)){
+#	NamesList=1:NumberUnknowns
+#}
+
+#TempHM=HeatMapOutput$UnknownGrids[,,UnknownNumber]
+#for(i in 1:HeatMapOutput$GridLength[1]){
+#	TempHM[i,]=HeatMapOutput$GridCoordinates[1,i]
+#}
+#TempOb<-data.frame(Probability=as.vector(HeatMapOutput$UnknownGrids[,,UnknownNumber]),Long=as.vector(TempHM))
+#for(i in 1:HeatMapOutput$GridLength[2]){
+#	TempHM[,i]=HeatMapOutput$GridCoordinates[2,i]
+#}
+#TempOb$Lat=as.vector(TempHM)
+#TempOb$Land=.IsLand(TempOb$Long,TempOb$Lat)
+#subdata=subset(TempOb,Land==1)
+##minp=min(subdata$Probability)
+#minp=0
+#maxp=max(subdata$Probability)
+#if(MaskWater){
+#	subdata=subset(TempOb,Land==1)
+#	#minp=min(subdata$Probability)
+#	minp=0
+#	maxp=max(subdata$Probability)
+#	p<-ggplot(subset(TempOb,Land==1),aes(Long,Lat))
+#	} else {
+#	#minp=min(TempOb$Probability)
+#	minp=0
+#	maxp=max(TempOb$Probability)
+#	p<-ggplot(TempOb,aes(Long,Lat))
+#	}
+	
+	
+#BestLocations=data.frame(Labels=NamesList)
+#TempLong=1:NumberToPlot
+#TempLat=1:NumberToPlot
+#for(i in 1:NumberToPlot){
+#	#need to find the maximum location of HeatMapOutput$UnknownGrids[,,i]
+#	if(MaskWater){
+#		#i need a matrix logical showing water...
+#		IntLoc=which((HeatMapOutput$UnknownGrids[,,i] == max(HeatMapOutput$UnknownGrids[,,i])&TRUE), arr.ind = TRUE)
+#	}else{
+#		IntLoc=which(HeatMapOutput$UnknownGrids[,,i]) == max(HeatMapOutput$UnknownGrids[,,i]), arr.ind = TRUE)
+#	}
+#	TempLong[i]=HeatMapOutput$GridCoordinates[1,IntLoc[1]]
+#	TempLat[i]=HeatMapOutput$GridCoordinates[2,IntLoc[2]]
+#	}
+#BestLocations$Long=TempLong
+#BestLocations$Lat=TempLat
+#	
+#p+	annotation_map(map_data("world"), fill=NA, colour = "white",asp=TRUE)+
+#	geom_tile(aes(fill=Probability),colour=NA,alpha=1) +
+#	scale_fill_gradient(high = "#CFE8ED",low = "#0F4657",limits=c(minp,maxp)) +
+#	annotation_map(map_data("world",boundary=TRUE), fill=NA, colour = "black", bg=par(bg=NA)) + 
+#	ylab("Latitude") + ggtitle(paste0("Best Locations, Total: ",NumberToPlot)) +
+#	xlab("Longitude")
+#}
 
 
 
