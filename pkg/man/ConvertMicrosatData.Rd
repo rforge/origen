@@ -67,7 +67,7 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 
 \code{\link{FitMultinomialModel}} for fitting allele surfaces to the converted Microsatellite data,
 
-\code{\link{PlotAlleleFrequencySurface2}} for a quick way to plot the resulting allele frequency surfaces from \code{FitOriGenModel} or \code{FitMultinomialModel},;
+\code{\link{PlotAlleleFrequencySurface}} for a quick way to plot the resulting allele frequency surfaces from \code{FitOriGenModel} or \code{FitMultinomialModel},;
 
 %\code{\link{FitAdmixedFindUnknowns}} for fitting allele surfaces to the converted data and finding the locations of the given unknown individuals who may be admixed,
 
@@ -88,7 +88,7 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 \dontrun{str(MicrosatDataSmall)}
 \dontrun{MicrosatAnalysisSmall=FitMultinomialModel(MicrosatDataSmall$DataArray,MicrosatDataSmall$SampleCoordinates,MaxGridLength=20)}
 \dontrun{str(MicrosatAnalysisSmall)}
-\dontrun{PlotAlleleFrequencySurface2(MicrosatAnalysisSmall)}
+\dontrun{PlotAlleleFrequencySurface(MicrosatAnalysisSmall)}
 
 
 }

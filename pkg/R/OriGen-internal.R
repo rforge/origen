@@ -553,57 +553,129 @@ FitMultinomialModel<-function(DataArray,SampleCoordinates,MaxGridLength=20,RhoPa
 }
 
 
-FitMultinomialModelFindUnknowns<-function(DataArray,SampleCoordinates,UnknownDataArray,MaxGridLength=20,RhoParameter=10){
+.GenerateIsLandMatrix<-function(GridLength,GridCoordinates){
+	ans=array(1,dim=c(GridLength[1],GridLength[2]))
+	x.vec=rep(GridCoordinates[1,1:GridLength[1]],each=GridLength[2])
+	y.vec=rep(GridCoordinates[2,1:GridLength[2]],times=GridLength[1])
+	temp.vec=map.where(database="world",x.vec,y.vec)
+	results.vec=x.vec*0+1
+	for(i in 1:length(temp.vec)){
+		if(is.na(temp.vec[i])){
+			results.vec[i]=0
+		}
+	}
+	ans=matrix(results.vec,nrow=GridLength[1],ncol=GridLength[2],byrow=TRUE)
+	return(ans)
+}
+
+
+GenerateHeatMaps<-function(FitModelOutput,UnknownDataArray,NumberLoci,RestrictToLand=TRUE){
+	NumberUnknowns=length(UnknownDataArray[,1,1])
+	#NumberLoci=FitModelOutput$NumberLoci
+	UnknownHeatMaps=array(1,dim=c(FitModelOutput$GridLength[1],FitModelOutput$GridLength[2],NumberUnknowns))
+	for(i in 1:NumberUnknowns){
+		for(j in 1:NumberLoci){
+			Allele1=UnknownDataArray[i,1,j]
+			Allele2=UnknownDataArray[i,2,j]
+			
+			#This takes care of alleles seen in the unknown data that aren't present in the data
+			if(Allele1>FitModelOutput$AllelesAtLocus[j]){
+				Allele1=0
+			}
+			if(Allele2>FitModelOutput$AllelesAtLocus[j]){
+				Allele2=0
+			}
+			#Homo vs Hetero
+			if(Allele1>0 & Allele2>0){
+				if(Allele1==Allele2){
+					UnknownHeatMaps[,,i]=UnknownHeatMaps[,,i]*FitModelOutput$AlleleFrequencySurfaces[Allele1,,,j]^2
+				}else{
+					UnknownHeatMaps[,,i]=UnknownHeatMaps[,,i]*2*FitModelOutput$AlleleFrequencySurfaces[Allele1,,,j]*FitModelOutput$AlleleFrequencySurfaces[Allele2,,,j]
+				}
+			}else if(Allele1>0){
+				UnknownHeatMaps[,,i]=UnknownHeatMaps[,,i]*FitModelOutput$AlleleFrequencySurfaces[Allele1,,,j]
+			}else if(Allele2>0){
+				UnknownHeatMaps[,,i]=UnknownHeatMaps[,,i]*FitModelOutput$AlleleFrequencySurfaces[Allele2,,,j]
+			}
+			
+			UnknownHeatMaps[,,i]=UnknownHeatMaps[,,i]/sum(UnknownHeatMaps[,,i])
+		}
+	}
+	if(RestrictToLand){
+		IsLandMatrix=.GenerateIsLandMatrix(FitModelOutput$GridLength,FitModelOutput$GridCoordinates)
+		for(i in 1:NumberUnknowns){
+			UnknownHeatMaps[,,i]=UnknownHeatMaps[,,i]*IsLandMatrix
+		}
+	}
+	ans=FitModelOutput
+	ans$UnknownGrids=UnknownHeatMaps
+	ans$UnknownDataArray=UnknownDataArray
+	ans$IsLandMatrix=IsLandMatrix
+	return(ans)
+}
+	
+
+
+
+
+
+FitMultinomialModelFindUnknowns<-function(DataArray,SampleCoordinates,UnknownDataArray,MaxGridLength=20,RhoParameter=10,RestrictToLand=TRUE){
 	#DataArray[MaxAlleles,SampleSites,NumberLoci] Gives the grouped data
 	#SampleCoordinates[SampleSites,2] gives the locations of the grouped data
 	#This function takes in the data, fits the model, and returns the allele frequency surfaces
 	#UnknownDataArray[NumberUnknowns,2,NumberLoci] gives the unknown data
-	if(!.is.wholenumber(MaxGridLength)){
-		stop("MaxGridLength must be an integer")
-	}
-	if(MaxGridLength<=1){
-		stop("MaxGridLength must be greater than 1")
-	}
-	if(RhoParameter<=0){
-		stop("RhoParameter must be greater than 0")
-	}
-	if(length(SampleCoordinates[1,])!=2){
-		stop("SampleCoordinates should give the Long/Lat coordinates of the grouped data so it should only contain 2 columns")
-	}
+	
 	NumberLoci=length(DataArray[1,1,])
-	SampleSites=length(DataArray[1,,1])
-	MaxAlleles=length(DataArray[,1,1])
 
-	GridCoordinates=array(0,c(2,MaxGridLength))
-	GridLength=array(0,2)
-	
-	GridAndCoordResults=.Fortran("UPDATE_GRID_COORD_SQUARE2",GridCoordinates=as.double(GridCoordinates),SampleCoordinates=as.double(SampleCoordinates),GridLength=as.integer(GridLength),MaxGridLength=as.integer(MaxGridLength),SampleSites=as.integer(SampleSites),PACKAGE="OriGen")
-	
-	GridLength=GridAndCoordResults$GridLength
-	GridCoordinates=GridAndCoordResults$GridCoordinates
-	
-	AllelesAtLocus=1:NumberLoci
-	AllelesAtLocus[]=2
-	for(i in 1:NumberLoci){
-		for(j in 1:MaxAlleles){
-			if(sum(DataArray[j,,i])>0.5){
-				AllelesAtLocus[i]=j
-			}
-		}
-	}
+	Surfaces=FitMultinomialModel(DataArray,SampleCoordinates,MaxGridLength,RhoParameter)
+	ResultsRaw=GenerateHeatMaps(Surfaces,UnknownDataArray,NumberLoci,RestrictToLand)
 
-	NumberUnknowns=length(UnknownDataArray[,1,1])
-	UnknownGrids=array(0.,dim=c(GridLength[1],GridLength[2],NumberUnknowns))
+	# if(!.is.wholenumber(MaxGridLength)){
+		# stop("MaxGridLength must be an integer")
+	# }
+	# if(MaxGridLength<=1){
+		# stop("MaxGridLength must be greater than 1")
+	# }
+	# if(RhoParameter<=0){
+		# stop("RhoParameter must be greater than 0")
+	# }
+	# if(length(SampleCoordinates[1,])!=2){
+		# stop("SampleCoordinates should give the Long/Lat coordinates of the grouped data so it should only contain 2 columns")
+	# }
+	# NumberLoci=length(DataArray[1,1,])
+	# SampleSites=length(DataArray[1,,1])
+	# MaxAlleles=length(DataArray[,1,1])
+
+	# GridCoordinates=array(0,c(2,MaxGridLength))
+	# GridLength=array(0,2)
+	
+	# GridAndCoordResults=.Fortran("UPDATE_GRID_COORD_SQUARE2",GridCoordinates=as.double(GridCoordinates),SampleCoordinates=as.double(SampleCoordinates),GridLength=as.integer(GridLength),MaxGridLength=as.integer(MaxGridLength),SampleSites=as.integer(SampleSites),PACKAGE="OriGen")
+	
+	# GridLength=GridAndCoordResults$GridLength
+	# GridCoordinates=GridAndCoordResults$GridCoordinates
+	
+	# AllelesAtLocus=1:NumberLoci
+	# AllelesAtLocus[]=2
+	# for(i in 1:NumberLoci){
+		# for(j in 1:MaxAlleles){
+			# if(sum(DataArray[j,,i])>0.5){
+				# AllelesAtLocus[i]=j
+			# }
+		# }
+	# }
+
+	# NumberUnknowns=length(UnknownDataArray[,1,1])
+	# UnknownGrids=array(0.,dim=c(GridLength[1],GridLength[2],NumberUnknowns))
 	
 
-	#AlleleFrequencySurfaces=array(0.,dim=c(MaxAlleles,GridLength[1],GridLength[2],NumberLoci))
-	ResultsRaw=.Fortran("FITMULTINOMIALMODELFIND",UnknownGrids=as.double(UnknownGrids),DataArray=as.integer(DataArray),RhoParameter=as.double(RhoParameter),SampleSites=as.integer(SampleSites),GridLength=as.integer(GridLength),MaxGridLength=as.integer(MaxGridLength),MaxAlleles=as.integer(MaxAlleles),NumberLoci=as.integer(NumberLoci),SampleCoordinates=as.double(SampleCoordinates),GridCoordinates=as.double(GridCoordinates),AllelesAtLocus=as.integer(AllelesAtLocus),NumberUnknowns=as.integer(NumberUnknowns),UnknownDataArray=as.integer(UnknownDataArray))#,PACKAGE="OriGen")
+	# #AlleleFrequencySurfaces=array(0.,dim=c(MaxAlleles,GridLength[1],GridLength[2],NumberLoci))
+	# ResultsRaw=.Fortran("FITMULTINOMIALMODELFIND",UnknownGrids=as.double(UnknownGrids),DataArray=as.integer(DataArray),RhoParameter=as.double(RhoParameter),SampleSites=as.integer(SampleSites),GridLength=as.integer(GridLength),MaxGridLength=as.integer(MaxGridLength),MaxAlleles=as.integer(MaxAlleles),NumberLoci=as.integer(NumberLoci),SampleCoordinates=as.double(SampleCoordinates),GridCoordinates=as.double(GridCoordinates),AllelesAtLocus=as.integer(AllelesAtLocus),NumberUnknowns=as.integer(NumberUnknowns),UnknownDataArray=as.integer(UnknownDataArray))#,PACKAGE="OriGen")
 
-	ResultsRaw$UnknownGrids=array(ResultsRaw$UnknownGrids,c(GridLength[1],GridLength[2],NumberUnknowns))
-	ResultsRaw$DataArray=array(ResultsRaw$DataArray,c(MaxAlleles,SampleSites,NumberLoci))
-	ResultsRaw$UnknownDataArray=array(ResultsRaw$UnknownDataArray,c(NumberUnknowns,2,NumberLoci))
-	ResultsRaw$SampleCoordinates=array(ResultsRaw$SampleCoordinates,c(SampleSites,2))
-	ResultsRaw$GridCoordinates=array(ResultsRaw$GridCoordinates,c(2,MaxGridLength))
+	# ResultsRaw$UnknownGrids=array(ResultsRaw$UnknownGrids,c(GridLength[1],GridLength[2],NumberUnknowns))
+	# ResultsRaw$DataArray=array(ResultsRaw$DataArray,c(MaxAlleles,SampleSites,NumberLoci))
+	# ResultsRaw$UnknownDataArray=array(ResultsRaw$UnknownDataArray,c(NumberUnknowns,2,NumberLoci))
+	# ResultsRaw$SampleCoordinates=array(ResultsRaw$SampleCoordinates,c(SampleSites,2))
+	# ResultsRaw$GridCoordinates=array(ResultsRaw$GridCoordinates,c(2,MaxGridLength))
 	
 	return(ResultsRaw)
 }
@@ -695,7 +767,7 @@ FitMultinomialModelFindUnknowns<-function(DataArray,SampleCoordinates,UnknownDat
 #An updated map can be downloaded from http://www.naturalearthdata.com/downloads/50m-cultural-vectors/
 
 
-PlotAlleleFrequencySurface<-function(AlleleSurfaceOutput,SNPNumber=1,MaskWater=TRUE){
+PlotAlleleFrequencySurfaceOld<-function(AlleleSurfaceOutput,SNPNumber=1,MaskWater=TRUE){
 #GridCoordinates(2,MaxGridLength)
 print("Note that the maps package used for vectors here is outdated, this is particularly true in Europe.") 
 #require("maps")
@@ -738,10 +810,11 @@ p+	annotation_map(map_data("world"), fill=NA, colour = "white",asp=TRUE)+
 
 
 
-PlotAlleleFrequencySurface2<-function(AlleleSurfaceOutput,LocusNumber=1,AlleleNumber=1,MaskWater=TRUE){
+PlotAlleleFrequencySurface<-function(AlleleSurfaceOutput,LocusNumber=1,AlleleNumber=1,MaskWater=TRUE,Scale=FALSE){
 #AlleleFrequencySurfaces=array(0.,dim=c(MaxAlleles,GridLength[1],GridLength[2],NumberLoci))
 #GridCoordinates(2,MaxGridLength)
 print("Note that the maps package used for vectors here is outdated, this is particularly true in Europe.") 
+print("Note: Setting AlleleNumber = 0 when using microsatellites plots all the alleles in a grid.") 
 #require("maps")
 #require("ggplot2")
 
@@ -755,48 +828,152 @@ if(length(dim(AlleleSurfaceOutput$AlleleFrequencySurfaces))==3){
 	TempHM=AlleleSurfaceOutput$AlleleFrequencySurfaces[AlleleNumber,,,LocusNumber]
 }
 
-for(i in 1:AlleleSurfaceOutput$GridLength[1]){
-	TempHM[i,]=AlleleSurfaceOutput$GridCoordinates[1,i]
-}
+if(SNPBool==FALSE & AlleleNumber == 0){
+	NumberAlleles=AlleleSurfaceOutput$AllelesAtLocus[LocusNumber]
+	TempHM=AlleleSurfaceOutput$AlleleFrequencySurfaces[1,,,LocusNumber]
 
-if(SNPBool){
-	TempOb<-data.frame(Frequency=as.vector(AlleleSurfaceOutput$AlleleFrequencySurfaces[LocusNumber,,]),Long=as.vector(TempHM))
+	for(i in 1:AlleleSurfaceOutput$GridLength[1]){
+		TempHM[i,]=AlleleSurfaceOutput$GridCoordinates[1,i]
+	}
+
+	TempOb2<-data.frame(Frequency=as.vector(AlleleSurfaceOutput$AlleleFrequencySurfaces[1:NumberAlleles,,,LocusNumber]),Long=rep(as.vector(TempHM),each=NumberAlleles),Allele=rep(1:NumberAlleles,times=length(TempHM)))
+	for(i in 1:AlleleSurfaceOutput$GridLength[2]){
+		TempHM[,i]=AlleleSurfaceOutput$GridCoordinates[2,i]
+	}
+	TempOb2$Lat=rep(as.vector(TempHM),each=NumberAlleles)
+	TempOb2$Land=.IsLand(TempOb2$Long,TempOb2$Lat)
+
+	#subdata=subset(TempOb,Land==1)
+	#minp=min(subdata$Frequency)
+	minp=0
+	#maxp=max(subdata$Frequency)
+	maxp=1
+	if(Scale){
+			maxp = max(TempOb2$Frequency)
+		}
+	if(MaskWater){
+		#subdata=subset(TempOb,Land==1)
+		#minp=min(subdata$Frequency)
+		#minp=0
+		#maxp=max(subdata$Frequency)
+		p<-ggplot(subset(TempOb2,Land==1),aes(Long,Lat))
+		} else {
+		#minp=min(TempOb$Frequency)
+		#minp=0
+		#maxp=max(TempOb$Frequency)
+		p<-ggplot(TempOb2,aes(Long,Lat))
+		}
+	p+annotation_map(map_data("world"), fill=NA, colour = "white",asp=TRUE)+
+		geom_tile(aes(fill=Frequency),colour=NA,alpha=1) +
+		scale_fill_gradient(high = "#CFE8ED",low = "#0F4657",limits=c(minp,maxp)) +
+		annotation_map(map_data("world",boundary=TRUE), fill=NA, colour = "black", bg=par(bg=NA)) + 
+		ylab("Latitude") + ggtitle(paste0("Allele Frequency Surfaces for Locus:",LocusNumber)) +
+		xlab("Longitude") + facet_wrap(~Allele)
+		
 }else{
-	TempOb<-data.frame(Frequency=as.vector(AlleleSurfaceOutput$AlleleFrequencySurfaces[AlleleNumber,,,LocusNumber]),Long=as.vector(TempHM))
-}
+	for(i in 1:AlleleSurfaceOutput$GridLength[1]){
+		TempHM[i,]=AlleleSurfaceOutput$GridCoordinates[1,i]
+	}
 
-for(i in 1:AlleleSurfaceOutput$GridLength[2]){
-	TempHM[,i]=AlleleSurfaceOutput$GridCoordinates[2,i]
-}
-TempOb$Lat=as.vector(TempHM)
-TempOb$Land=.IsLand(TempOb$Long,TempOb$Lat)
-subdata=subset(TempOb,Land==1)
-#minp=min(subdata$Frequency)
-minp=0
-#maxp=max(subdata$Frequency)
-maxp=1
-if(MaskWater){
+	if(SNPBool){
+		TempOb<-data.frame(Frequency=as.vector(AlleleSurfaceOutput$AlleleFrequencySurfaces[LocusNumber,,]),Long=as.vector(TempHM))
+	}else{
+		TempOb<-data.frame(Frequency=as.vector(AlleleSurfaceOutput$AlleleFrequencySurfaces[AlleleNumber,,,LocusNumber]),Long=as.vector(TempHM))
+	}
+
+	for(i in 1:AlleleSurfaceOutput$GridLength[2]){
+		TempHM[,i]=AlleleSurfaceOutput$GridCoordinates[2,i]
+	}
+	TempOb$Lat=as.vector(TempHM)
+	TempOb$Land=.IsLand(TempOb$Long,TempOb$Lat)
 	subdata=subset(TempOb,Land==1)
 	#minp=min(subdata$Frequency)
-	#minp=0
+	minp=0
 	#maxp=max(subdata$Frequency)
-	p<-ggplot(subset(TempOb,Land==1),aes(Long,Lat))
-	} else {
-	#minp=min(TempOb$Frequency)
-	#minp=0
-	#maxp=max(TempOb$Frequency)
-	p<-ggplot(TempOb,aes(Long,Lat))
+	maxp=1
+	if(Scale){
+			maxp = max(TempOb$Frequency)
+		}
+	if(MaskWater){
+		subdata=subset(TempOb,Land==1)
+		#minp=min(subdata$Frequency)
+		#minp=0
+		#maxp=max(subdata$Frequency)
+		p<-ggplot(subset(TempOb,Land==1),aes(Long,Lat))
+		} else {
+		#minp=min(TempOb$Frequency)
+		#minp=0
+		#maxp=max(TempOb$Frequency)
+		p<-ggplot(TempOb,aes(Long,Lat))
+		}
+	
+		#temp2=data.frame(Frequency=as.vector(AlleleSurfaceOutput$Frequencies[AlleleNumber,,LocusNumber]),Long=as.vector(AlleleSurfaceOutput$SampleCoordinates[,1]),Lat=as.vector(AlleleSurfaceOutput$SampleCoordinates[,2]))
+	p+	annotation_map(map_data("world"), fill=NA, colour = "white",asp=TRUE)+
+		geom_tile(aes(fill=Frequency),colour=NA,alpha=1) +
+		scale_fill_gradient(high = "#CFE8ED",low = "#0F4657",limits=c(minp,maxp)) +
+		#geom_point(data=temp2,aes(Long,Lat,colour=Frequency)) +
+		#scale_colour_gradient(high = "#CFE8ED",low = "#0F4657",limits=c(minp,maxp)) +
+		annotation_map(map_data("world",boundary=TRUE), fill=NA, colour = "black", bg=par(bg=NA)) + 
+		ylab("Latitude") + ggtitle(paste0("Allele Frequency Surface Locus:",LocusNumber," Allele:",AlleleNumber)) +
+		xlab("Longitude") 
 	}
-p+	annotation_map(map_data("world"), fill=NA, colour = "white",asp=TRUE)+
-	geom_tile(aes(fill=Frequency),colour=NA,alpha=1) +
-	scale_fill_gradient(high = "#CFE8ED",low = "#0F4657",limits=c(minp,maxp)) +
-	annotation_map(map_data("world",boundary=TRUE), fill=NA, colour = "black", bg=par(bg=NA)) + 
-	ylab("Latitude") + ggtitle(paste0("Allele Frequency Surface Locus:",LocusNumber," Allele:",AlleleNumber)) +
-	xlab("Longitude")
 }
 
 
 
+##doing a facet wrap of all the alleles for a given locus
+#PlotAlleleFrequencySurfaceAll<-function(AlleleSurfaceOutput,LocusNumber=1,NumberAlleles=0,MaskWater=TRUE,Scale=FALSE){
+##Default plots all alleles
+##AlleleFrequencySurfaces=array(0.,dim=c(MaxAlleles,GridLength[1],GridLength[2],NumberLoci))
+##GridCoordinates(2,MaxGridLength)
+#print("Note that the maps package used for vectors here is outdated, this is particularly true in Europe.") 
+##require("maps")
+##require("ggplot2")
+#if(NumberAlleles==0){
+#	NumberAlleles=AlleleSurfaceOutput$AllelesAtLocus[LocusNumber]
+#}
+#
+#TempHM=AlleleSurfaceOutput$AlleleFrequencySurfaces[1,,,LocusNumber]
+#
+#for(i in 1:AlleleSurfaceOutput$GridLength[1]){
+#	TempHM[i,]=AlleleSurfaceOutput$GridCoordinates[1,i]
+#}
+#
+#TempOb2<-data.frame(Frequency=as.vector(AlleleSurfaceOutput$AlleleFrequencySurfaces[1:NumberAlleles,,,LocusNumber]),Long=rep(as.vector(TempHM),each=NumberAlleles),Allele=rep(1:NumberAlleles,times=length(TempHM)))
+#for(i in 1:AlleleSurfaceOutput$GridLength[2]){
+#	TempHM[,i]=AlleleSurfaceOutput$GridCoordinates[2,i]
+#}
+#TempOb2$Lat=rep(as.vector(TempHM),each=NumberAlleles)
+#TempOb2$Land=.IsLand(TempOb2$Long,TempOb2$Lat)
+#
+##subdata=subset(TempOb,Land==1)
+##minp=min(subdata$Frequency)
+#minp=0
+##maxp=max(subdata$Frequency)
+#maxp=1
+#if(Scale){
+#    	maxp = max(TempOb2$Frequency)
+#    }
+#if(MaskWater){
+#	#subdata=subset(TempOb,Land==1)
+#	#minp=min(subdata$Frequency)
+#	#minp=0
+#	#maxp=max(subdata$Frequency)
+#	p<-ggplot(subset(TempOb2,Land==1),aes(Long,Lat))
+#	} else {
+#	#minp=min(TempOb$Frequency)
+#	#minp=0
+#	#maxp=max(TempOb$Frequency)
+#	p<-ggplot(TempOb2,aes(Long,Lat))
+#	}
+#p+annotation_map(map_data("world"), fill=NA, colour = "white",asp=TRUE)+
+#	geom_tile(aes(fill=Frequency),colour=NA,alpha=1) +
+#	scale_fill_gradient(high = "#CFE8ED",low = "#0F4657",limits=c(minp,maxp)) +
+#	annotation_map(map_data("world",boundary=TRUE), fill=NA, colour = "black", bg=par(bg=NA)) + 
+#	ylab("Latitude") + ggtitle(paste0("Allele Frequency Surfaces for Locus:",LocusNumber)) +
+#	xlab("Longitude") + facet_wrap(~Allele)
+#
+#}
 
 
 PlotUnknownHeatMap<-function(HeatMapOutput,UnknownNumber=1,MaskWater=TRUE){

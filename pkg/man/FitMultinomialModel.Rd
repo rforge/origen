@@ -86,7 +86,7 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 
 \code{\link{FitMultinomialModel}} for fitting allele surfaces to the converted Microsatellite data,
 
-\code{\link{PlotAlleleFrequencySurface2}} for a quick way to plot the resulting allele frequency surfaces from \code{FitOriGenModel} or \code{FitMultinomialModel},;
+\code{\link{PlotAlleleFrequencySurface}} for a quick way to plot the resulting allele frequency surfaces from \code{FitOriGenModel} or \code{FitMultinomialModel},;
 
 %\code{\link{ConvertUnknownPEDData}} for converting two Plink PED files (known and unknown)into a format appropriate for analysis,
 
@@ -129,7 +129,7 @@ trials2=FitMultinomialModel(TestData,TestCoordinates,MaxGridLength=30,RhoParamet
 str(trials2)
 
 #Plotting the model
-PlotAlleleFrequencySurface2(trials2)
+PlotAlleleFrequencySurface(trials2)
 
 }
 

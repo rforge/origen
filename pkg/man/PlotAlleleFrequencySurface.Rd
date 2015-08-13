@@ -4,17 +4,18 @@
 Plots an OriGen fitted allele frequency surface
 }
 \description{
-This function plots an allele frequency surface outputted by FitOriGenModel.
+This function plots an allele frequency surface outputted by FitOriGenModel and FitMultinomialModel.
 }
-\usage{
-PlotAlleleFrequencySurface(AlleleSurfaceOutput,SNPNumber=1,MaskWater=TRUE)
+\usage{PlotAlleleFrequencySurface(AlleleSurfaceOutput,LocusNumber=1,AlleleNumber=1,MaskWater=TRUE,Scale=FALSE)
 
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-	\item{AlleleSurfaceOutput}{The output of \code{\link{FitOriGenModel}}}
-	\item{SNPNumber}{Integer indicating the SNP number to plot.}
+	\item{AlleleSurfaceOutput}{The output of \code{\link{FitOriGenModel}} or \code{\link{FitMultinomialModel}}}
+	\item{LocusNumber}{Integer indicating the Locus number to plot.}
+	\item{AlleleNumber}{Integer indicating which allele to plot.  If using microsatellites and AlleleNumber = 0, then this plots all the allele frequency surfaces in a grid.}
 	\item{MaskWater}{Logical value that if true removes water from the plotted regions.}
+	\item{Scale}{Logical value that if TRUE will scale the colors to (0,max(Frequency)) instead of (0,1). }
 	
 %	\item{PlinkFileName}{Base name of Plink PED file (i.e. without ".ped" or ".map") }
 
@@ -31,7 +32,7 @@ PlotAlleleFrequencySurface(AlleleSurfaceOutput,SNPNumber=1,MaskWater=TRUE)
 }
 
 \value{
-	This outputs a plot of the allele frequency surface on a map.
+	This outputs a plot (using ggplot) of the allele frequency surface on a map.
 %List with the following components:
 %\item{AlleleFrequencySurfaces}{An array giving the allele frequency for each coordinate and each SNP.  The dimension of this array is [NumberSNPs,NumberLongitudeDivisions,NumberLatitudeDivisions], where either NumberLongitudeDivisions or NumberLatitudeDivisions is equal to MaxGridLength(an input to this function) and the other is scaled so that the geodesic distance between points horizontally and vertically is equal.}
 
@@ -83,11 +84,15 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 }
 
 \seealso{
+\code{\link{ConvertMicrosatData}} for converting Microsatellite data files into a format appropriate for analysis,	
+	
 \code{\link{ConvertPEDData}} for converting Plink PED files into a format appropriate for analysis,
 
-\code{\link{FitOriGenModel}} for fitting allele surfaces to the converted data,
+\code{\link{FitOriGenModel}} for fitting allele surfaces to the converted SNP data,
 
-\code{\link{PlotAlleleFrequencySurface}} for a quick way to plot the resulting allele frequency surfaces from \code{FitOriGenModel},;
+\code{\link{FitMultinomialModel}} for fitting allele surfaces to the converted Microsatellite data,
+
+\code{\link{PlotAlleleFrequencySurface}} for a quick way to plot the resulting allele frequency surfaces from \code{FitOriGenModel} or \code{FitMultinomialModel},;
 
 %\code{\link{ConvertUnknownPEDData}} for converting two Plink PED files (known and unknown)into a format appropriate for analysis,
 
@@ -108,9 +113,17 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 \examples{
 
 #Data generation
-SampleSites=25
-NumberSNPs=10
-TestData=array(sample(2*(1:30),2*SampleSites*NumberSNPs,replace=TRUE),dim=c(2,SampleSites,NumberSNPs))
+SampleSites=20
+NumberLoci=6
+MaxAlleles=4
+NumberAllelesAtEachLocus=sample(2:MaxAlleles,NumberLoci,replace=TRUE)
+
+TestData=array(0,dim=c(MaxAlleles,SampleSites,NumberLoci))
+for(i in 1:NumberLoci){
+	for(j in 1:NumberAllelesAtEachLocus[i]){
+		TestData[j,,i]=sample(1:10,SampleSites,replace=TRUE)
+	}
+}
 #Europe is about -9 to 38 and 34 to 60
 TestCoordinates=array(0,dim=c(SampleSites,2))
 TestCoordinates[,1]=runif(SampleSites,-9,38)
@@ -119,7 +132,7 @@ TestCoordinates[,2]=runif(SampleSites,34,60)
 #Fitting the model
 #MaxGridLength is the maximum number of boxes allowed to span the region in either direction
 #RhoParameter is a tuning constant
-trials2=FitOriGenModel(TestData,TestCoordinates,MaxGridLength=30,RhoParameter=10)
+trials2=FitMultinomialModel(TestData,TestCoordinates,MaxGridLength=30,RhoParameter=10)
 str(trials2)
 
 #Plotting the model

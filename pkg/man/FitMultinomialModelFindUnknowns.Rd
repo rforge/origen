@@ -7,7 +7,7 @@ Fit OriGen microsatellite allele frequency surfaces
 This function fits allele frequency surfaces to microsatellite data and then finds locations for unknown individuals..
 }
 \usage{
-FitMultinomialModelFindUnknowns(DataArray,SampleCoordinates,UnknownDataArray,MaxGridLength=20,RhoParameter=10)
+FitMultinomialModelFindUnknowns(DataArray,SampleCoordinates,UnknownDataArray,MaxGridLength=20,RhoParameter=10,RestrictToLand=TRUE)
 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -20,17 +20,21 @@ FitMultinomialModelFindUnknowns(DataArray,SampleCoordinates,UnknownDataArray,Max
 	
 	\item{SampleCoordinates}{This is an array which gives the longitude and latitude of each of the found sample sites.  The dimension of this array is [SampleSites,2], where the second dimension represents longitude and latitude respectively.}
 	
-	\item{UnknownDataArray}{This is an array which gives the alleles for the individuals of unknown origin.  The dimension of this array is [NumberUnknowns,2,NumberLoci], where 2 represents to 2 alleles each individual has at each locus.  Note that these should not be allele lengths but rather the allele number matching the dimension in DataArray.}
+	\item{UnknownDataArray}{This is an array which gives the alleles for the individuals of unknown origin.  The dimension of this array is [NumberUnknowns,2,NumberLoci], where 2 represents to 2 alleles each individual has at each locus.  Note that these should not be allele lengths but rather the allele number matching the dimension in DataArray.  Note that 0 or negative values here indicate unknown alleles and it is assumed that both are either known or unknown.}
 	
   \item{MaxGridLength}{An integer giving the maximum number of boxes to fill the longer side of the region.  Note that computation time increases quadratically as this number increases, but this number also should be high enough to separate different sample sites otherwise they will be binned together as a single site.}
 
   \item{RhoParameter}{This is a real precision parameter weighting the amount of smoothing.  A higher value flattens out the surface while a lower value allows for more fluctuations.  The default value of 10 was used in our analysis and should prove a good starting point.  To choose a value by crossvalidation please see \code{\link{FindRhoParameterCrossValidation}}}
+  
+  \item{RestrictToLand}{If TRUE, this logical parameter restricts the heat maps to land areas only.}
  
 }
 
 \value{
 List with the following components:
 %\item{AlleleFrequencySurfaces}{An array giving the allele frequency for each allele, each coordinate, and each SNP.  The dimension of this array is [MaxAlleles,NumberLoci,NumberLongitudeDivisions,NumberLatitudeDivisions], where either NumberLongitudeDivisions or NumberLatitudeDivisions is equal to MaxGridLength(an input to this function) and the other is scaled so that the geodesic distance between points horizontally and vertically is equal.}
+
+\item{AlleleFrequencySurfaces}{An array giving the allele frequency for each allele, each coordinate, and each SNP.  The dimension of this array is [MaxAlleles,NumberLoci,NumberLongitudeDivisions,NumberLatitudeDivisions], where either NumberLongitudeDivisions or NumberLatitudeDivisions is equal to MaxGridLength(an input to this function) and the other is scaled so that the geodesic distance between points horizontally and vertically is equal.}
 
 \item{UnknownGrids}{An array giving the probability that an unknown individual comes from the given location.  The dimension of this array is [NumberLongitudeDivisions,NumberLatitudeDivisions,NumberUnknowns], where either NumberLongitudeDivisions or NumberLatitudeDivisions is equal to MaxGridLength(an input to this function) and the other is scaled so that the geodesic distance between points horizontally and vertically is equal.}
 
@@ -92,7 +96,7 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 
 \code{\link{FitMultinomialModelFindUnknowns}} for fitting allele surfaces to the converted Microsatellite data,
 
-\code{\link{PlotAlleleFrequencySurface2}} for a quick way to plot the resulting allele frequency surfaces from \code{FitOriGenModel} or \code{FitMultinomialModelFindUnknowns},;
+\code{\link{PlotAlleleFrequencySurface}} for a quick way to plot the resulting allele frequency surfaces from \code{FitOriGenModel} or \code{FitMultinomialModelFindUnknowns},;
 
 %\code{\link{ConvertUnknownPEDData}} for converting two Plink PED files (known and unknown)into a format appropriate for analysis,
 
