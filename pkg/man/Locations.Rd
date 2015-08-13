@@ -7,7 +7,6 @@
 }
 \usage{Locations}
 \format{A matrix containing names and locations.}
-\source{}
-\references{
-}
+%\source{}
+%\references{}
 \keyword{datasets}

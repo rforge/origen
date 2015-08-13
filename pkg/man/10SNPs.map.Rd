@@ -5,9 +5,8 @@
 \description{
   This data set gives the genetic data in Plink format to be used for testing only.  This is to be used with 10SNPs.ped and Locations.txt.
 }
-\usage{}
+%\usage{}
 \format{A Plink PED format file.}
-\source{}
-\references{
-}
+%\source{}
+%\references{}
 \keyword{datasets}

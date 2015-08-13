@@ -5,7 +5,7 @@ Version: 1.02
 Author: John Michael O Ranola, John Novembre, and Kenneth Lange
 Depends: R (>= 2.10), maps, ggplot2
 Maintainer: John Michael O. Ranola <ranolaj@uw.edu>
-Description: This package primarily estimates allele frequency surfaces from point estimates.  
+Description: Used primarily for estimates of allele frequency surfaces from point estimates.  
     It can also place individuals of unknown origin back onto the map with great accuracy.  
     Additionally, it can place admixed individuals by estimating contributing fractions at each
     location on a map. Lastly, it can rank SNPs by their ability to differentiate populations.  

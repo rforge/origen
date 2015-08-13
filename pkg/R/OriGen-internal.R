@@ -773,6 +773,9 @@ print("Note that the maps package used for vectors here is outdated, this is par
 #require("maps")
 #require("ggplot2")
 
+#note this next line is in the function merely to pass R checks.  It serves no other purpose.
+Land=Lat=Long=Frequency=NULL
+
 TempHM=AlleleSurfaceOutput$AlleleFrequencySurfaces[SNPNumber,,]
 for(i in 1:AlleleSurfaceOutput$GridLength[1]){
 	TempHM[i,]=AlleleSurfaceOutput$GridCoordinates[1,i]
@@ -817,6 +820,9 @@ print("Note that the maps package used for vectors here is outdated, this is par
 print("Note: Setting AlleleNumber = 0 when using microsatellites plots all the alleles in a grid.") 
 #require("maps")
 #require("ggplot2")
+
+#note this next line is in the function merely to pass R checks.  It serves no other purpose.
+Land=Lat=Long=Frequency=NULL
 
 if(length(dim(AlleleSurfaceOutput$AlleleFrequencySurfaces))==3){
 	#We are dealing with the SNP case
@@ -982,6 +988,9 @@ print("Note that the maps package used for vectors here is outdated, this is par
 #require("maps")
 #require("ggplot2")
 
+#note this next line is in the function merely to pass R checks.  It serves no other purpose.
+Land=Lat=Long=Probability=NULL
+
 TempHM=HeatMapOutput$UnknownGrids[,,UnknownNumber]
 for(i in 1:HeatMapOutput$GridLength[1]){
 	TempHM[i,]=HeatMapOutput$GridCoordinates[1,i]
@@ -1090,6 +1099,9 @@ PlotAdmixedSurface<-function(AdmixedOutput,UnknownNumber=1,MaskWater=TRUE){
 print("Note that the maps package used for vectors here is outdated, this is particularly true in Europe.") 
 #require("maps")
 #require("ggplot2")
+
+#note this next line is in the function merely to pass R checks.  It serves no other purpose.
+Rounded=Lat=Long=Fractions=NULL
 
 TempHM=AdmixedOutput$AdmixtureFractions[,,UnknownNumber]
 #TempHM=AdmixedOutput$UnknownGrids[,,UnknownNumber]

@@ -7,7 +7,6 @@
 }
 \usage{MicrosatTrialDataSmall}
 \format{A text file containing names and locations.}
-\source{}
-\references{
-}
+%\source{}
+%\references{}
 \keyword{datasets}
