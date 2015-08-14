@@ -3,7 +3,7 @@ Type: Package
 Title: Fast Spatial Ancestry via Flexible Allele Frequency Surfaces
 Version: 1.2
 Author: John Michael O Ranola, John Novembre, and Kenneth Lange
-Imports: maps, ggplot2
+Depends: maps, ggplot2
 Maintainer: John Michael O. Ranola <ranolaj@uw.edu>
 Description: Used primarily for estimates of allele frequency surfaces from point estimates.  
     It can also place individuals of unknown origin back onto the map with great accuracy.  
