@@ -28,7 +28,7 @@ FitMultinomialModel(DataArray,SampleCoordinates,MaxGridLength=20,RhoParameter=10
 
 \value{
 List with the following components:
-\item{AlleleFrequencySurfaces}{An array giving the allele frequency for each allele, each coordinate, and each SNP.  The dimension of this array is [MaxAlleles,NumberLoci,NumberLongitudeDivisions,NumberLatitudeDivisions], where either NumberLongitudeDivisions or NumberLatitudeDivisions is equal to MaxGridLength(an input to this function) and the other is scaled so that the geodesic distance between points horizontally and vertically is equal.}
+\item{AlleleFrequencySurfaces}{An array giving the allele frequency for each allele, each coordinate, and each SNP.  The dimension of this array is [MaxAlleles, NumberLoci, NumberLongitudeDivisions, NumberLatitudeDivisions], where either NumberLongitudeDivisions or NumberLatitudeDivisions is equal to MaxGridLength(an input to this function) and the other is scaled so that the geodesic distance between points horizontally and vertically is equal.}
 
 %\item{UnknownGrids}{An array giving the probability that an unknown individual comes from the given location.  The dimension of this array is [NumberLongitudeDivisions,NumberLatitudeDivisions,NumberUnknowns], where either NumberLongitudeDivisions or NumberLatitudeDivisions is equal to MaxGridLength(an input to this function) and the other is scaled so that the geodesic distance between points horizontally and vertically is equal.}
 \item{DataArray}{An array giving the number alleles grouped by sample sites for each locus.  The dimension of this array is [MaxAlleles,SampleSites,NumberSNPs].}

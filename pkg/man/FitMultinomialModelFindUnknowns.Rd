@@ -7,7 +7,7 @@ Fit OriGen microsatellite allele frequency surfaces
 This function fits allele frequency surfaces to microsatellite data and then finds locations for unknown individuals..
 }
 \usage{
-FitMultinomialModelFindUnknowns(DataArray,SampleCoordinates,UnknownDataArray,&
+FitMultinomialModelFindUnknowns(DataArray,SampleCoordinates,UnknownDataArray,
 	MaxGridLength=20,RhoParameter=10,RestrictToLand=TRUE)
 
 }
@@ -35,9 +35,9 @@ FitMultinomialModelFindUnknowns(DataArray,SampleCoordinates,UnknownDataArray,&
 List with the following components:
 %\item{AlleleFrequencySurfaces}{An array giving the allele frequency for each allele, each coordinate, and each SNP.  The dimension of this array is [MaxAlleles,NumberLoci,NumberLongitudeDivisions,NumberLatitudeDivisions], where either NumberLongitudeDivisions or NumberLatitudeDivisions is equal to MaxGridLength(an input to this function) and the other is scaled so that the geodesic distance between points horizontally and vertically is equal.}
 
-\item{AlleleFrequencySurfaces}{An array giving the allele frequency for each allele, each coordinate, and each SNP.  The dimension of this array is [MaxAlleles,NumberLoci,NumberLongitudeDivisions,NumberLatitudeDivisions], where either NumberLongitudeDivisions or NumberLatitudeDivisions is equal to MaxGridLength(an input to this function) and the other is scaled so that the geodesic distance between points horizontally and vertically is equal.}
+\item{AlleleFrequencySurfaces}{An array giving the allele frequency for each allele, each coordinate, and each SNP.  The dimension of this array is [MaxAlleles, NumberLoci, NumberLongitudeDivisions, NumberLatitudeDivisions], where either NumberLongitudeDivisions or NumberLatitudeDivisions is equal to MaxGridLength(an input to this function) and the other is scaled so that the geodesic distance between points horizontally and vertically is equal.}
 
-\item{UnknownGrids}{An array giving the probability that an unknown individual comes from the given location.  The dimension of this array is [NumberLongitudeDivisions,NumberLatitudeDivisions,NumberUnknowns], where either NumberLongitudeDivisions or NumberLatitudeDivisions is equal to MaxGridLength(an input to this function) and the other is scaled so that the geodesic distance between points horizontally and vertically is equal.}
+\item{UnknownGrids}{An array giving the probability that an unknown individual comes from the given location.  The dimension of this array is [NumberLongitudeDivisions, NumberLatitudeDivisions, NumberUnknowns], where either NumberLongitudeDivisions or NumberLatitudeDivisions is equal to MaxGridLength(an input to this function) and the other is scaled so that the geodesic distance between points horizontally and vertically is equal.}
 
 \item{DataArray}{An array giving the number alleles grouped by sample sites for each locus.  The dimension of this array is [MaxAlleles,SampleSites,NumberSNPs].}
 
@@ -144,7 +144,7 @@ for(i in 1:NumberUnknowns){
 		UnknownData[i,,j]=sample(1:NumberAllelesAtEachLocus[j],2)
 	}
 }
-trials2=FitMultinomialModelFindUnknowns(TestData,TestCoordinates,&
+trials2=FitMultinomialModelFindUnknowns(TestData,TestCoordinates,
 	UnknownData,MaxGridLength=20,RhoParameter=10)
 str(trials2)
 

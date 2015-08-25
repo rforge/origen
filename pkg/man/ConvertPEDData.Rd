@@ -68,7 +68,7 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 \dontrun{str(trials)}
 MaxGridLength=20
 RhoParameter=10
-\dontrun{trials2=FitOriGenModel(trials$DataArray,trials$SampleCoordinates,&
+\dontrun{trials2=FitOriGenModel(trials$DataArray,trials$SampleCoordinates,
 	MaxGridLength,RhoParameter)}
 \dontrun{PlotAlleleFrequencySurface(trials2)}
 

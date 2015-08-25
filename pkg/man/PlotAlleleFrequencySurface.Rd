@@ -6,7 +6,7 @@ Plots an OriGen fitted allele frequency surface
 \description{
 This function plots an allele frequency surface outputted by FitOriGenModel and FitMultinomialModel.
 }
-\usage{PlotAlleleFrequencySurface(AlleleSurfaceOutput,LocusNumber=1,&
+\usage{PlotAlleleFrequencySurface(AlleleSurfaceOutput,LocusNumber=1,
 		AlleleNumber=1,MaskWater=TRUE,Scale=FALSE)
 
 }

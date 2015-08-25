@@ -92,7 +92,7 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 \dontrun{str(trials3)}
 MaxGridLength=30
 RhoParameter=10
-\dontrun{trials4=FitOriGenModelFindUnknowns(trials3$DataArray,trials3$SampleCoordinates,&
+\dontrun{trials4=FitOriGenModelFindUnknowns(trials3$DataArray,trials3$SampleCoordinates,
 	trials3$UnknownData[1:2,],MaxGridLength,RhoParameter)}
 \dontrun{PlotUnknownHeatMap(trials4,UnknownNumber=1,MaskWater=TRUE)}
 

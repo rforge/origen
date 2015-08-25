@@ -7,7 +7,7 @@ Fit the OriGen model and place unknown individuals who may be admixed
 This function fits the OriGen model and places individuals of unknown origins who may be admixed.  This function estimates admixture fractions at each location rather than the probability of coming from each location.
 }
 \usage{
-FitAdmixedModelFindUnknowns(DataArray,SampleCoordinates,UnknownData,&
+FitAdmixedModelFindUnknowns(DataArray,SampleCoordinates,UnknownData,
 	MaxGridLength=20,RhoParameter=10,LambdaParameter=100,MaskWater=TRUE)
 
 }
@@ -43,9 +43,9 @@ List with the following components:
 
 %\item{UnknownGrids}{An array giving the probability that an unknown individual comes from the given location.  The dimension of this array is [NumberLongitudeDivisions,NumberLatitudeDivisions,NumberUnknowns], where either NumberLongitudeDivisions or NumberLatitudeDivisions is equal to MaxGridLength(an input to this function) and the other is scaled so that the geodesic distance between points horizontally and vertically is equal.}
 
-\item{AdmixtureFractions}{An array giving the admixture fraction from the given location.  In other words this is the fractional contribution of the location to the unknown individuals genetic data.  The dimension of this array is [NumberLongitudeDivisions,NumberLatitudeDivisions,NumberUnknowns], where either NumberLongitudeDivisions or NumberLatitudeDivisions is equal to MaxGridLength(an input to this function) and the other is scaled so that the geodesic distance between points horizontally and vertically is equal.}
+\item{AdmixtureFractions}{An array giving the admixture fraction from the given location.  In other words this is the fractional contribution of the location to the unknown individuals genetic data.  The dimension of this array is [NumberLongitudeDivisions, NumberLatitudeDivisions, NumberUnknowns], where either NumberLongitudeDivisions or NumberLatitudeDivisions is equal to MaxGridLength(an input to this function) and the other is scaled so that the geodesic distance between points horizontally and vertically is equal.}
 
-\item{DataArray}{An array giving the number of major/minor SNPs (defined as the most occuring in the dataset) grouped by sample sites for each SNP.  The dimension of this array is [2,SampleSites,NumberSNPs].}
+\item{DataArray}{An array giving the number of major/minor SNPs (defined as the most occuring in the dataset) grouped by sample sites for each SNP.  The dimension of this array is [2, SampleSites, NumberSNPs].}
 
 \item{NumberSNPs}{This shows the integer number of SNPs found.}
 
@@ -120,7 +120,7 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 #Data generation
 SampleSites=10
 NumberSNPs=4
-TestData=array(sample(2*(1:30),2*SampleSites*NumberSNPs,replace=TRUE),&
+TestData=array(sample(2*(1:30),2*SampleSites*NumberSNPs,replace=TRUE),
 	dim=c(2,SampleSites,NumberSNPs))
 #Europe is about -9 to 38 and 34 to 60
 TestCoordinates=array(0,dim=c(SampleSites,2))
@@ -129,13 +129,13 @@ TestCoordinates[,2]=runif(SampleSites,34,60)
 
 #This code simulates the number of major alleles the unknown individuals have.
 NumberUnknowns=2
-TestUnknowns=array(sample(0:2,NumberUnknowns*NumberSNPs,replace=TRUE),&
+TestUnknowns=array(sample(0:2,NumberUnknowns*NumberSNPs,replace=TRUE),
 	dim=c(NumberUnknowns,NumberSNPs))
 
 #Fitting the admixed model
 #MaxGridLength is the maximum number of boxes allowed to span the region in either direction
 #RhoParameter is a tuning constant
-trials6=FitAdmixedModelFindUnknowns(TestData,TestCoordinates,&
+trials6=FitAdmixedModelFindUnknowns(TestData,TestCoordinates,
 	TestUnknowns,MaxGridLength=20,RhoParameter=10)
 
 #Plots the admixed surface disregarding fractions less than 0.01

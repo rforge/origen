@@ -85,10 +85,10 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 #LocationTrialDataSmall.txt are included in data for formatting.
 #Note that this was done to allow inclusion of the test data in the package.
 
-\dontrun{MicrosatDataSmall=ConvertMicrosatData("MicrosatTrialDataSmall.txt",&
+\dontrun{MicrosatDataSmall=ConvertMicrosatData("MicrosatTrialDataSmall.txt",
 		"LocationTrialDataSmall.txt")}
 \dontrun{str(MicrosatDataSmall)}
-\dontrun{MicrosatAnalysisSmall=FitMultinomialModel(MicrosatDataSmall$DataArray,&
+\dontrun{MicrosatAnalysisSmall=FitMultinomialModel(MicrosatDataSmall$DataArray,
 		MicrosatDataSmall$SampleCoordinates,MaxGridLength=20)}
 \dontrun{str(MicrosatAnalysisSmall)}
 \dontrun{PlotAlleleFrequencySurface(MicrosatAnalysisSmall)}

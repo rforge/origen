@@ -28,7 +28,7 @@ FitOriGenModel(DataArray,SampleCoordinates,MaxGridLength=20,RhoParameter=10)
 
 \value{
 List with the following components:
-\item{AlleleFrequencySurfaces}{An array giving the allele frequency for each coordinate and each SNP.  The dimension of this array is [NumberSNPs,NumberLongitudeDivisions,NumberLatitudeDivisions], where either NumberLongitudeDivisions or NumberLatitudeDivisions is equal to MaxGridLength(an input to this function) and the other is scaled so that the geodesic distance between points horizontally and vertically is equal.}
+\item{AlleleFrequencySurfaces}{An array giving the allele frequency for each coordinate and each SNP.  The dimension of this array is [NumberSNPs, NumberLongitudeDivisions, NumberLatitudeDivisions], where either NumberLongitudeDivisions or NumberLatitudeDivisions is equal to MaxGridLength(an input to this function) and the other is scaled so that the geodesic distance between points horizontally and vertically is equal.}
 
 %\item{UnknownGrids}{An array giving the probability that an unknown individual comes from the given location.  The dimension of this array is [NumberLongitudeDivisions,NumberLatitudeDivisions,NumberUnknowns], where either NumberLongitudeDivisions or NumberLatitudeDivisions is equal to MaxGridLength(an input to this function) and the other is scaled so that the geodesic distance between points horizontally and vertically is equal.}
 
@@ -106,7 +106,7 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 #Data generation
 SampleSites=10
 NumberSNPs=5
-TestData=array(sample(2*(1:30),2*SampleSites*NumberSNPs,&
+TestData=array(sample(2*(1:30),2*SampleSites*NumberSNPs,
 	replace=TRUE),dim=c(2,SampleSites,NumberSNPs))
 #Europe is about -9 to 38 and 34 to 60
 TestCoordinates=array(0,dim=c(SampleSites,2))

@@ -110,7 +110,7 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 #Data generation
 SampleSites=10
 NumberSNPs=5
-TestData=array(sample(2*(1:30),2*SampleSites*NumberSNPs,replace=TRUE),&
+TestData=array(sample(2*(1:30),2*SampleSites*NumberSNPs,replace=TRUE),
 	dim=c(2,SampleSites,NumberSNPs))
 #Europe is about -9 to 38 and 34 to 60
 TestCoordinates=array(0,dim=c(SampleSites,2))

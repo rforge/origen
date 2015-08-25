@@ -7,7 +7,7 @@ Fit the OriGen model and place unknown individuals
 This function fits the OriGen model and places individuals of unknown origins.
 }
 \usage{
-FitOriGenModelFindUnknowns(DataArray,SampleCoordinates,&
+FitOriGenModelFindUnknowns(DataArray,SampleCoordinates,
 	UnknownData,MaxGridLength=20,RhoParameter=10)
 
 }
@@ -38,7 +38,7 @@ FitOriGenModelFindUnknowns(DataArray,SampleCoordinates,&
 List with the following components:
 %\item{AlleleFrequencySurfaces}{An array giving the allele frequency for each coordinate and each SNP.  The dimension of this array is [NumberSNPs,NumberLongitudeDivisions,NumberLatitudeDivisions], where either NumberLongitudeDivisions or NumberLatitudeDivisions is equal to MaxGridLength(an input to this function) and the other is scaled so that the geodesic distance between points horizontally and vertically is equal.}
 
-\item{UnknownGrids}{An array giving the probability that an unknown individual comes from the given location.  The dimension of this array is [NumberLongitudeDivisions,NumberLatitudeDivisions,NumberUnknowns], where either NumberLongitudeDivisions or NumberLatitudeDivisions is equal to MaxGridLength(an input to this function) and the other is scaled so that the geodesic distance between points horizontally and vertically is equal.}
+\item{UnknownGrids}{An array giving the probability that an unknown individual comes from the given location.  The dimension of this array is [NumberLongitudeDivisions, NumberLatitudeDivisions, NumberUnknowns], where either NumberLongitudeDivisions or NumberLatitudeDivisions is equal to MaxGridLength(an input to this function) and the other is scaled so that the geodesic distance between points horizontally and vertically is equal.}
 
 \item{DataArray}{An array giving the number of major/minor SNPs (defined as the most occuring in the dataset) grouped by sample sites for each SNP.  The dimension of this array is [2,SampleSites,NumberSNPs].}
 
@@ -113,7 +113,7 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 #Data generation
 SampleSites=10
 NumberSNPs=5
-TestData=array(sample(2*(1:30),2*SampleSites*NumberSNPs,&
+TestData=array(sample(2*(1:30),2*SampleSites*NumberSNPs,
 	replace=TRUE),dim=c(2,SampleSites,NumberSNPs))
 #Europe is about -9 to 38 and 34 to 60
 TestCoordinates=array(0,dim=c(SampleSites,2))
@@ -122,13 +122,13 @@ TestCoordinates[,2]=runif(SampleSites,34,60)
 
 #This code simulates the number of major alleles the unknown individuals have.
 NumberUnknowns=2
-TestUnknowns=array(sample(0:2,NumberUnknowns*NumberSNPs,&
+TestUnknowns=array(sample(0:2,NumberUnknowns*NumberSNPs,
 	replace=TRUE),dim=c(NumberUnknowns,NumberSNPs))
 
 #Fitting the model
 #MaxGridLength is the maximum number of boxes allowed to span the region in either direction
 #RhoParameter is a tuning constant
-trials4=FitOriGenModelFindUnknowns(TestData,TestCoordinates,&
+trials4=FitOriGenModelFindUnknowns(TestData,TestCoordinates,
 	TestUnknowns,MaxGridLength=20,RhoParameter=10)
 str(trials4)
 
