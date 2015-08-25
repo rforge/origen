@@ -108,9 +108,10 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 \examples{
 
 #Data generation
-SampleSites=25
-NumberSNPs=10
-TestData=array(sample(2*(1:30),2*SampleSites*NumberSNPs,replace=TRUE),dim=c(2,SampleSites,NumberSNPs))
+SampleSites=10
+NumberSNPs=5
+TestData=array(sample(2*(1:30),2*SampleSites*NumberSNPs,replace=TRUE),&
+	dim=c(2,SampleSites,NumberSNPs))
 #Europe is about -9 to 38 and 34 to 60
 TestCoordinates=array(0,dim=c(SampleSites,2))
 TestCoordinates[,1]=runif(SampleSites,-9,38)
@@ -118,12 +119,14 @@ TestCoordinates[,2]=runif(SampleSites,34,60)
 
 #This code simulates the number of major alleles the unknown individuals have.
 NumberUnknowns=2
-TestUnknowns=array(sample(0:2,NumberUnknowns*NumberSNPs,replace=TRUE),dim=c(NumberUnknowns,NumberSNPs))
+TestUnknowns=array(sample(0:2,NumberUnknowns*NumberSNPs,replace=TRUE),&
+	dim=c(NumberUnknowns,NumberSNPs))
 
 #Fitting the model
 #MaxGridLength is the maximum number of boxes allowed to span the region in either direction
 #RhoParameter is a tuning constant
-trials4=FitOriGenModelFindUnknowns(TestData,TestCoordinates,TestUnknowns,MaxGridLength=30,RhoParameter=10)
+trials4=FitOriGenModelFindUnknowns(TestData,TestCoordinates,TestUnknowns,&
+	MaxGridLength=20,RhoParameter=10)
 str(trials4)
 
 #Plotting the unknown heat map

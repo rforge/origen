@@ -7,7 +7,8 @@ Fit OriGen microsatellite allele frequency surfaces
 This function fits allele frequency surfaces to microsatellite data and then finds locations for unknown individuals..
 }
 \usage{
-FitMultinomialModelFindUnknowns(DataArray,SampleCoordinates,UnknownDataArray,MaxGridLength=20,RhoParameter=10,RestrictToLand=TRUE)
+FitMultinomialModelFindUnknowns(DataArray,SampleCoordinates,UnknownDataArray,&
+	MaxGridLength=20,RhoParameter=10,RestrictToLand=TRUE)
 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -116,8 +117,8 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 
 \examples{
 #Data generation
-SampleSites=20
-NumberLoci=6
+SampleSites=10
+NumberLoci=4
 MaxAlleles=4
 NumberAllelesAtEachLocus=sample(2:MaxAlleles,NumberLoci,replace=TRUE)
 
@@ -143,7 +144,8 @@ for(i in 1:NumberUnknowns){
 		UnknownData[i,,j]=sample(1:NumberAllelesAtEachLocus[j],2)
 	}
 }
-trials2=FitMultinomialModelFindUnknowns(TestData,TestCoordinates,UnknownData,MaxGridLength=30,RhoParameter=10)
+trials2=FitMultinomialModelFindUnknowns(TestData,TestCoordinates,&
+	UnknownData,MaxGridLength=20,RhoParameter=10)
 str(trials2)
 
 #Plotting the model

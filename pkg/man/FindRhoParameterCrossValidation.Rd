@@ -125,7 +125,8 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 #Please navigate to the appropriate location before testing 
 #the following commands.
 
-\dontrun{trials5=FindRhoParameterCrossValidation("10SNPs","Locations.txt",MaxIts=4,MaxGridLength=20)}
+\dontrun{trials5=FindRhoParameterCrossValidation("10SNPs","Locations.txt",&
+	MaxIts=4,MaxGridLength=20)}
 \dontrun{trials5}
 
 }

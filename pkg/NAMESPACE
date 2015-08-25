@@ -1,3 +1,5 @@
 useDynLib(OriGen)
 import(maps, ggplot2)
+importFrom("graphics", "par")
+importFrom("utils", "read.table")
 exportPattern("^[[:alpha:]]+")

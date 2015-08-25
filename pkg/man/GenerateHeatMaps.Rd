@@ -121,8 +121,8 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 
 \examples{
 #Data generation
-SampleSites=20
-NumberLoci=6
+SampleSites=10
+NumberLoci=4
 MaxAlleles=4
 NumberAllelesAtEachLocus=sample(2:MaxAlleles,NumberLoci,replace=TRUE)
 
@@ -149,7 +149,7 @@ for(i in 1:NumberUnknowns){
 	}
 }
 
-trials=FitMultinomialModel(TestData,TestCoordinates,MaxGridLength=30,RhoParameter=1)
+trials=FitMultinomialModel(TestData,TestCoordinates,MaxGridLength=20,RhoParameter=1)
 str(trials)
 
 trials2=GenerateHeatMaps(trials,UnknownData,NumberLoci=NumberLoci)

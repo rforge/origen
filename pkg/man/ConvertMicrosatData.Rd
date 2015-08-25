@@ -81,12 +81,15 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 
 \examples{
 
-#Note that sample files MicrosatTrialDataSmall.txt and LocationTrialDataSmall.txt are included in data for formatting.
+#Note that sample files MicrosatTrialDataSmall.txt and 
+#LocationTrialDataSmall.txt are included in data for formatting.
 #Note that this was done to allow inclusion of the test data in the package.
 
-\dontrun{MicrosatDataSmall=ConvertMicrosatData("MicrosatTrialDataSmall.txt","LocationTrialDataSmall.txt")}
+\dontrun{MicrosatDataSmall=ConvertMicrosatData("MicrosatTrialDataSmall.txt",&
+		"LocationTrialDataSmall.txt")}
 \dontrun{str(MicrosatDataSmall)}
-\dontrun{MicrosatAnalysisSmall=FitMultinomialModel(MicrosatDataSmall$DataArray,MicrosatDataSmall$SampleCoordinates,MaxGridLength=20)}
+\dontrun{MicrosatAnalysisSmall=FitMultinomialModel(MicrosatDataSmall$DataArray,&
+		MicrosatDataSmall$SampleCoordinates,MaxGridLength=20)}
 \dontrun{str(MicrosatAnalysisSmall)}
 \dontrun{PlotAlleleFrequencySurface(MicrosatAnalysisSmall)}
 

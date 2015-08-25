@@ -106,8 +106,8 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 
 \examples{
 #Data generation
-SampleSites=20
-NumberLoci=6
+SampleSites=10
+NumberLoci=4
 MaxAlleles=4
 NumberAllelesAtEachLocus=sample(2:MaxAlleles,NumberLoci,replace=TRUE)
 
@@ -125,7 +125,7 @@ TestCoordinates[,2]=runif(SampleSites,34,60)
 #Fitting the model
 #MaxGridLength is the maximum number of boxes allowed to span the region in either direction
 #RhoParameter is a tuning constant
-trials2=FitMultinomialModel(TestData,TestCoordinates,MaxGridLength=30,RhoParameter=10)
+trials2=FitMultinomialModel(TestData,TestCoordinates,MaxGridLength=20,RhoParameter=10)
 str(trials2)
 
 #Plotting the model

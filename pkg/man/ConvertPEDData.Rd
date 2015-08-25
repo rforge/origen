@@ -66,9 +66,10 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 
 \dontrun{trials=ConvertPEDData("10SNPs","Locations.txt")}
 \dontrun{str(trials)}
-MaxGridLength=30
+MaxGridLength=20
 RhoParameter=10
-\dontrun{trials2=FitOriGenModel(trials$DataArray,trials$SampleCoordinates,MaxGridLength,RhoParameter)}
+\dontrun{trials2=FitOriGenModel(trials$DataArray,trials$SampleCoordinates,&
+	MaxGridLength,RhoParameter)}
 \dontrun{PlotAlleleFrequencySurface(trials2)}
 
 }
