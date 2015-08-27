@@ -134,9 +134,10 @@ TestUnknowns=array(sample(0:2,NumberUnknowns*NumberSNPs,replace=TRUE),
 
 #Fitting the admixed model
 #MaxGridLength is the maximum number of boxes allowed to span the region in either direction
+#Note that MaxGridLength is reduced here to allow the example to run in less than 5 secs
 #RhoParameter is a tuning constant
 trials6=FitAdmixedModelFindUnknowns(TestData,TestCoordinates,
-	TestUnknowns,MaxGridLength=20,RhoParameter=10)
+	TestUnknowns,MaxGridLength=10,RhoParameter=10)
 
 #Plots the admixed surface disregarding fractions less than 0.01
 PlotAdmixedSurface(trials6)
