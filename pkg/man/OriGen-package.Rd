@@ -22,19 +22,26 @@ Index:
 
 \item \code{\link{ConvertUnknownPEDData}}    This function converts Plink PED format files (PED/MAP) along with location files to the input required for OriGen.  This differs from ConvertPEDData by its additional PED formatted input which contains the genotype information for unknown individuals.
 
-\item \code{\link{FitOriGenModel}}    Fits the OriGen model and returns the allele frequency surfaces.  These surfaces can be plotted with the function PlotAlleleFrequencySurface.
+\item \code{\link{ConvertMicrosatData}} This function converts Microsatellite data files into a format appropriate for analysis.
 
-\item \code{\link{PlotAlleleFrequencySurface}}    Plots a specified allele frequency surface from the output of FitOriGenModel.
+\item \code{\link{FitOriGenModel}}    Fits the OriGen model for SNPs and returns the allele frequency surfaces.  These surfaces can be plotted with the function \code{\link{PlotAlleleFrequencySurface}}.
 
-\item \code{\link{FitOriGenModelFindUnknowns}}    Fits the OriGen model and places individuals of unknown origin onto the map.  This returns probability heat maps for each unknown individual.  These heat maps can be plotted with PlotUnknownHeatMap.
+\item \code{\link{FitMultinomialModel}} Fits the OriGen model for microsatellites and returns the allele frequency surfaces.  These surfaces can be plotted with the function \code{\link{PlotAlleleFrequencySurface}}.
 
-\item \code{\link{PlotUnknownHeatMap}}    Plots a specified unknown individuals heat map from the output of FitOriGenModelFindUnknowns.
+\item \code{\link{FitOriGenModelFindUnknowns}}    Fits the OriGen model for SNPs and places individuals of unknown origin onto the map.  This returns probability heat maps for each unknown individual.  These heat maps can be plotted with \code{\link{PlotUnknownHeatMap}}.  For microsatellite analysis see \code{\link{FitMultinomialModelFindUnknowns}}.
 
-\item \code{\link{FitAdmixedModelFindUnknowns}}    Fits the OriGen model and places unknown individuals who may be admixed onto the map.  Instead of returning a probability heat map for each individual, this returns admixture fractions at each location.  Note that many locations are 0.  This can be plotted with the function PlotAdmixedSurface.
+\item \code{\link{FitMultinomialModelFindUnknowns}} Fits the OriGen model for microsatellites and places individuals of unknown origin onto the map.  This returns probability heat maps for each unknown individual.  These heat maps can be plotted with \code{\link{PlotUnknownHeatMap}}.  For SNP analysis see \code{\link{FitOriGenModelFindUnknowns}}.
 
-\item \code{\link{PlotAdmixedSurface}}    Plots the admixture fractions of a specified individual from the output of FitAdmixedModelFindUnknowns.
+\item \code{\link{FitAdmixedModelFindUnknowns}}    Fits the OriGen model for SNPs and places unknown individuals who may be admixed onto the map.  Instead of returning a probability heat map for each individual, this returns admixture fractions at each location.  Note that many locations are 0.  This can be plotted with the function \code{\link{PlotAdmixedSurface}}.
 
 \item \code{\link{RankSNPsLRT}}    This function takes a PED file along with a location file and outputs the likelihood ratio ranking of each SNP along with the LRT statistic and Rosenberg's informativeness for assignment.
+
+\item \code{\link{PlotAlleleFrequencySurface}}    Plots a specified allele frequency surface from the output of \code{\link{FitOriGenModel}} or \code{\link{FitMultinomialModel}}.  Note that all alleles can be plotted by setting AlleleNumber=0.
+
+\item \code{\link{PlotUnknownHeatMap}}    Plots a specified unknown individuals heat map from the output of \code{\link{FitOriGenModelFindUnknowns}} or \code{\link{FitMultinomialModelFindUnknowns}}.
+
+\item \code{\link{PlotAdmixedSurface}}    Plots the admixture fractions of a specified individual from the output of \code{\link{FitAdmixedModelFindUnknowns}}.
+
 }
 
 }
@@ -45,7 +52,7 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 Maintainer: John Michael Ranola <ranolaj@uw.edu> 
 }
 \references{
-Ranola J, Novembre J, and Lange K (2014) Fast Spatial Ancestry via Flexible Allele Frequency Surfaces.    Bioinformatics, in press.
+Ranola J, Novembre J, and Lange K (2014) Fast Spatial Ancestry via Flexible Allele Frequency Surfaces.    Bioinformatics 30(20):2915-22.
 }
 
 \keyword{ Ancestry }

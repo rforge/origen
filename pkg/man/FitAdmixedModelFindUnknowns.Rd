@@ -136,6 +136,7 @@ TestUnknowns=array(sample(0:2,NumberUnknowns*NumberSNPs,replace=TRUE),
 #MaxGridLength is the maximum number of boxes allowed to span the region in either direction
 #Note that MaxGridLength is reduced here to allow the example to run in less than 5 secs
 #RhoParameter is a tuning constant
+print("MaxGridLength is intentionally set really low for fast examples. Meaningful results will most likely require a higher value.")
 trials6=FitAdmixedModelFindUnknowns(TestData,TestCoordinates,
 	TestUnknowns,MaxGridLength=10,RhoParameter=10)
 
