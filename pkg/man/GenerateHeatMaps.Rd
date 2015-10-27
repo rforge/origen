@@ -4,10 +4,10 @@
 Fit OriGen microsatellite allele frequency surfaces
 }
 \description{
-This function fits allele frequency surfaces to microsatellite data and then finds locations for unknown individuals..
+This function generates heat maps from OriGen microsatellite data output and then finds locations for unknown individuals..
 }
 \usage{
-GenerateHeatMaps(FitModelOutput,UnknownDataArray,NumberLoci,RestrictToLand=TRUE)
+GenerateHeatMaps(FitModelOutput,UnknownDataArray,NumberLoci,MaskWater=TRUE)
 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -31,7 +31,7 @@ GenerateHeatMaps(FitModelOutput,UnknownDataArray,NumberLoci,RestrictToLand=TRUE)
 
 %  \item{RhoParameter}{This is a real precision parameter weighting the amount of smoothing.  A higher value flattens out the surface while a lower value allows for more fluctuations.  The default value of 10 was used in our analysis and should prove a good starting point.  To choose a value by crossvalidation please see \code{\link{FindRhoParameterCrossValidation}}}
   
-  \item{RestrictToLand}{If TRUE, this logical parameter restricts the heat maps to land areas only.}
+  \item{MaskWater}{If TRUE, this logical parameter restricts the heat maps to land areas only.}
  
 }
 
@@ -120,27 +120,23 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 }
 
 \examples{
-#Data generation
+##Data generation
 SampleSites=10
 NumberLoci=4
 MaxAlleles=4
 NumberAllelesAtEachLocus=sample(2:MaxAlleles,NumberLoci,replace=TRUE)
-
 TestData=array(0,dim=c(MaxAlleles,SampleSites,NumberLoci))
 for(i in 1:NumberLoci){
 	for(j in 1:NumberAllelesAtEachLocus[i]){
 		TestData[j,,i]=sample(1:10,SampleSites,replace=TRUE)
 	}
 }
-
-#Europe is about -9 to 38 and 34 to 60
+##This data is simulated in Europe which is around Longitude -9 to 38 and Latitude 34 to 60
 TestCoordinates=array(0,dim=c(SampleSites,2))
 TestCoordinates[,1]=runif(SampleSites,-9,38)
 TestCoordinates[,2]=runif(SampleSites,34,60)
 
-#Fitting the model
-#MaxGridLength is the maximum number of boxes allowed to span the region in either direction
-#RhoParameter is a tuning constant
+##This simulates the unknown data
 NumberUnknowns=2
 UnknownData=array(0,dim=c(NumberUnknowns,2,NumberLoci))
 for(i in 1:NumberUnknowns){
@@ -149,13 +145,37 @@ for(i in 1:NumberUnknowns){
 	}
 }
 
-trials=FitMultinomialModel(TestData,TestCoordinates,MaxGridLength=20,RhoParameter=1)
-str(trials)
+##MaxGridLength is the maximum number of boxes allowed to span the region in either direction
+##Note that this number was reduced to allow the example to run in less than 5 secs
+##RhoParameter is a tuning constant
+print("MaxGridLength is intentionally set really low for fast examples. 
+	Meaningful results will most likely require a higher value.")
 
-trials2=GenerateHeatMaps(trials,UnknownData,NumberLoci=NumberLoci)
+##Fits the allele frequency surfaces only
+SurfaceTrials=FitMultinomialModel(TestData,TestCoordinates,MaxGridLength=20,RhoParameter=10)
+str(SurfaceTrials)
+##Plotting the model
+PlotAlleleFrequencySurface(SurfaceTrials,LocusNumber=1,AlleleNumber=1,
+	MaskWater=TRUE,Scale=FALSE)
 
-#Plotting the model
-PlotUnknownHeatMap(trials2,UnknownNumber=1)
+##You can generate heatmaps of unknown individual's placements from with the allele
+##surfaces using GenerateHeatMaps or use FitMultinomialModelFindUnknowns
+HeatMapTrials=GenerateHeatMaps(SurfaceTrials,UnknownData,NumberLoci=NumberLoci)
+##Plotting the unknown heat map
+PlotUnknownHeatMap(HeatMapTrials,UnknownNumber=1,MaskWater=TRUE)
+	
+##Fitting the model and finding the unknown locations
+#UnknownTrials=FitMultinomialModelFindUnknowns(TestData,TestCoordinates,
+#	UnknownData,MaxGridLength=20,RhoParameter=10)
+#str(UnknownTrials)
+##Plotting the unknown heat map
+#PlotUnknownHeatMap(UnknownTrials,UnknownNumber=1,MaskWater=TRUE)
+
+##Fitting the admixed model
+#AdmixedTrials=FitMultinomialAdmixedModelFindUnknowns(TestData,TestCoordinates,
+#	UnknownData,MaxGridLength=10,RhoParameter=10)
+##Plots the admixed surface disregarding fractions less than 0.01
+#PlotAdmixedSurface(AdmixedTrials,UnknownNumber=1)
 
 }
 

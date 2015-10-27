@@ -7,13 +7,15 @@ Plots admixture fraction results
 This function plots the admixture results from FitAdmixedModelFindUnknowns.  These numbers represent the fractional contribution each location has to the individuals genetic data.  In other words, an individual with unmixed parents from two different locations should have a fraction of 0.5 from each of those locations with enough data.
 }
 \usage{
-PlotAdmixedSurface(AdmixedOutput,UnknownNumber=1,MaskWater=TRUE)
+PlotAdmixedSurface(AdmixedOutput,UnknownNumber=1,Percent=FALSE,Title=NULL,MaskWater=TRUE)
 
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
 	\item{AdmixedOutput}{The output of \code{\link{FitAdmixedModelFindUnknowns}}}
 	\item{UnknownNumber}{Integer indicating the unknown individual heat map number to plot.}
+	\item{Percent}{A logical value that will display percentages instead of fractions if TRUE.}
+	\item{Title}{A string giving the title of the plot.  If NULL, a default title is used.}
 	\item{MaskWater}{Logical value that if true removes water from the plotted regions.}
 	
 %	\item{PlinkFileName}{Base name of Plink PED file (i.e. without ".ped" or ".map") }
@@ -107,32 +109,33 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 
 \examples{
 
-#Data generation
+##Data generation
 SampleSites=10
 NumberSNPs=4
 TestData=array(sample(2*(1:30),2*SampleSites*NumberSNPs,replace=TRUE),
 	dim=c(2,SampleSites,NumberSNPs))
-#Europe is about -9 to 38 and 34 to 60
+##This data is simulated in Europe which is around Longitude -9 to 38 and Latitude 34 to 60
 TestCoordinates=array(0,dim=c(SampleSites,2))
 TestCoordinates[,1]=runif(SampleSites,-9,38)
 TestCoordinates[,2]=runif(SampleSites,34,60)
 
-#This code simulates the number of major alleles the unknown individuals have.
+##This code simulates the number of major alleles the unknown individuals have.
 NumberUnknowns=2
 TestUnknowns=array(sample(0:2,NumberUnknowns*NumberSNPs,
 	replace=TRUE),dim=c(NumberUnknowns,NumberSNPs))
 
-#Fitting the admixed model
-#MaxGridLength is the maximum number of boxes allowed to span the region in either direction
-#Note that this number was reduced to allow the example to run in less than 5 secs
-#RhoParameter is a tuning constant
+##MaxGridLength is the maximum number of boxes allowed to span the region in either direction
+##Note that this number was reduced to allow the example to run in less than 5 secs
+##RhoParameter is a tuning constant
 print("MaxGridLength is intentionally set really low for fast examples. 
 	Meaningful results will most likely require a higher value.")
-trials6=FitAdmixedModelFindUnknowns(TestData,TestCoordinates,
-	TestUnknowns,MaxGridLength=10,RhoParameter=10)
 
-#Plots the admixed surface disregarding fractions less than 0.01
-PlotAdmixedSurface(trials6)
+##Fitting the admixed model
+AdmixedTrials=FitAdmixedModelFindUnknowns(TestData,TestCoordinates,
+	TestUnknowns,MaxGridLength=10,RhoParameter=10)
+##Plots the admixed surface disregarding fractions less than 0.01
+PlotAdmixedSurface(AdmixedTrials,UnknownNumber=1)
+
 }
 
 
