@@ -1,7 +1,7 @@
 Package: OriGen
 Type: Package
 Title: Fast Spatial Ancestry via Flexible Allele Frequency Surfaces
-Version: 1.4.0
+Version: 1.4.1
 Author: John Michael O Ranola, John Novembre, and Kenneth Lange
 Depends: maps, ggplot2
 Maintainer: John Michael O. Ranola <ranolaj@uw.edu>
