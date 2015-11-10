@@ -139,7 +139,7 @@ TestUnknowns=array(sample(0:2,NumberUnknowns*NumberSNPs,replace=TRUE),
 print("MaxGridLength is intentionally set really low for fast examples.
 	Meaningful results will most likely require a higher value.")
 trials6=FitAdmixedModelFindUnknowns(TestData,TestCoordinates,
-	TestUnknowns,MaxGridLength=8,RhoParameter=10)
+	TestUnknowns,MaxGridLength=6,RhoParameter=10)
 
 #Plots the admixed surface disregarding fractions less than 0.01
 PlotAdmixedSurface(trials6)
