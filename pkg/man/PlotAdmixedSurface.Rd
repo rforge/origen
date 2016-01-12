@@ -134,7 +134,7 @@ print("MaxGridLength is intentionally set really low for fast examples.
 ##Note that MaxGridLength is intentionally set unusably low so that the example
 ##runs in under 5 seconds.  The default value of 20 is more reasonable in general
 AdmixedTrials=FitAdmixedModelFindUnknowns(TestData,TestCoordinates,
-	TestUnknowns,MaxGridLength=6,RhoParameter=10)
+	TestUnknowns,MaxGridLength=8,RhoParameter=10)
 ##Plots the admixed surface disregarding fractions less than 0.01
 PlotAdmixedSurface(AdmixedTrials,UnknownNumber=1)
 

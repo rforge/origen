@@ -542,7 +542,7 @@ FitMultinomialModel<-function(DataArray,SampleCoordinates,MaxGridLength=20,RhoPa
 
 	AlleleFrequencySurfaces=array(0.,dim=c(MaxAlleles,GridLength[1],GridLength[2],NumberLoci))
 
-	ResultsRaw=.Fortran("FITMULTINOMIALMODEL",AlleleFrequencySurfaces=as.double(AlleleFrequencySurfaces),DataArray=as.integer(DataArray),RhoParameter=as.double(RhoParameter),SampleSites=as.integer(SampleSites),GridLength=as.integer(GridLength),MaxGridLength=as.integer(MaxGridLength),MaxAlleles=as.integer(MaxAlleles),NumberLoci=as.integer(NumberLoci),SampleCoordinates=as.double(SampleCoordinates),AllelesAtLocus=as.integer(AllelesAtLocus),GridCoordinates=as.double(GridCoordinates))#,PACKAGE="OriGen")
+	ResultsRaw=.Fortran("FITMULTINOMIALMODEL",AlleleFrequencySurfaces=as.double(AlleleFrequencySurfaces),DataArray=as.integer(DataArray),RhoParameter=as.double(RhoParameter),SampleSites=as.integer(SampleSites),GridLength=as.integer(GridLength),MaxGridLength=as.integer(MaxGridLength),MaxAlleles=as.integer(MaxAlleles),NumberLoci=as.integer(NumberLoci),SampleCoordinates=as.double(SampleCoordinates),AllelesAtLocus=as.integer(AllelesAtLocus),GridCoordinates=as.double(GridCoordinates),PACKAGE="OriGen")
 
 	ResultsRaw$AlleleFrequencySurfaces=array(ResultsRaw$AlleleFrequencySurfaces,c(MaxAlleles,GridLength[1],GridLength[2],NumberLoci))
 	ResultsRaw$DataArray=array(ResultsRaw$DataArray,c(MaxAlleles,SampleSites,NumberLoci))
@@ -669,7 +669,7 @@ FitMultinomialModelFindUnknowns<-function(DataArray,SampleCoordinates,UnknownDat
 
 
 	# #AlleleFrequencySurfaces=array(0.,dim=c(MaxAlleles,GridLength[1],GridLength[2],NumberLoci))
-	# ResultsRaw=.Fortran("FITMULTINOMIALMODELFIND",UnknownGrids=as.double(UnknownGrids),DataArray=as.integer(DataArray),RhoParameter=as.double(RhoParameter),SampleSites=as.integer(SampleSites),GridLength=as.integer(GridLength),MaxGridLength=as.integer(MaxGridLength),MaxAlleles=as.integer(MaxAlleles),NumberLoci=as.integer(NumberLoci),SampleCoordinates=as.double(SampleCoordinates),GridCoordinates=as.double(GridCoordinates),AllelesAtLocus=as.integer(AllelesAtLocus),NumberUnknowns=as.integer(NumberUnknowns),UnknownDataArray=as.integer(UnknownDataArray))#,PACKAGE="OriGen")
+	# ResultsRaw=.Fortran("FITMULTINOMIALMODELFIND",UnknownGrids=as.double(UnknownGrids),DataArray=as.integer(DataArray),RhoParameter=as.double(RhoParameter),SampleSites=as.integer(SampleSites),GridLength=as.integer(GridLength),MaxGridLength=as.integer(MaxGridLength),MaxAlleles=as.integer(MaxAlleles),NumberLoci=as.integer(NumberLoci),SampleCoordinates=as.double(SampleCoordinates),GridCoordinates=as.double(GridCoordinates),AllelesAtLocus=as.integer(AllelesAtLocus),NumberUnknowns=as.integer(NumberUnknowns),UnknownDataArray=as.integer(UnknownDataArray),PACKAGE="OriGen")
 
 	# ResultsRaw$UnknownGrids=array(ResultsRaw$UnknownGrids,c(GridLength[1],GridLength[2],NumberUnknowns))
 	# ResultsRaw$DataArray=array(ResultsRaw$DataArray,c(MaxAlleles,SampleSites,NumberLoci))
@@ -681,7 +681,57 @@ FitMultinomialModelFindUnknowns<-function(DataArray,SampleCoordinates,UnknownDat
 }
 
 
+CalcFractionsMultiLoglik<-function(UnknownDataArray,LambdaParameter=100){
+	#This function takes the UnknownDataArray which contains allelelic information
+	#for individuals WITHIN a single sample site and calculates the resulting
+	#fraction loglikelihood for placing all individuals 100% back into their site
+	#Note that we force the fortran code to do a single site by pretending it is
+	#2 equal sites.
+	#UnknownDataArray[NumberUnknowns,2,NumberLoci] lists the two allele numbers of the unknown data
+	#Loglikelihoods[NumberUnknowns] lists the loglikelihoods for each unknown individual
 
+	NumberUnknowns=length(UnknownDataArray[,1,1])
+	NumberLoci=length(UnknownDataArray[1,1,])
+	Loglikelihoods=array(0,dim=c(NumberUnknowns))
+	Nodes=2
+	MaxAlleles=0
+	for(i in 1:NumberLoci){
+		TempInt=length(unique(as.vector(UnknownDataArray[,,i])))
+		if(TempInt>MaxAlleles){
+			MaxAlleles=TempInt
+		}
+	}
+
+	UnknownDataArrayFact=UnknownDataArray
+	AlleleCountsPop=array(0,dim=c(NumberLoci,MaxAlleles,Nodes))
+	for(i in 1:NumberLoci){
+		TempFact=as.factor(UnknownDataArray[,,i])
+		for(j in 1:NumberUnknowns){
+			UnknownDataArrayFact[j,1,i]=as.numeric(TempFact[j])
+			UnknownDataArrayFact[j,2,i]=as.numeric(TempFact[j+NumberUnknowns])
+		}
+		for(j in 1:(2*NumberUnknowns)){
+			for(k in 1:Nodes){
+				AlleleCountsPop[i,TempFact[j],k]=AlleleCountsPop[i,TempFact[j],k]+1
+			}
+		}
+	}
+	AlleleFrequencyPop=AlleleCountsPop
+	for(i in 1:NumberLoci){
+		for(j in 1:MaxAlleles){
+			for(k in 1:Nodes){
+				AlleleFrequencyPop[i,j,k]=AlleleCountsPop[i,j,k]/sum(AlleleCountsPop[i,,k])
+			}
+		}
+	}
+
+	for(i in 1:NumberUnknowns){
+		ResultsRaw=.Fortran("CALC_FRACTIONS_MULTI_LOGLIK_SUB",UnknownIndivFactored=as.integer(t(UnknownDataArrayFact[i,,])),GenomeFractions=as.double(c(1,0)),AlleleFrequencyPop=as.double(AlleleFrequencyPop),Lambda=as.double(LambdaParameter),Nodes=as.integer(Nodes),NumberLoci=as.integer(NumberLoci),MaxAlleles=as.integer(MaxAlleles),Loglik=as.double(Loglikelihoods[i]),PACKAGE="OriGen")
+
+		Loglikelihoods[i]=ResultsRaw$Loglik
+	}
+	return(Loglikelihoods)
+}#end CalcFractionsMultiLoglik
 
 
 
@@ -739,11 +789,12 @@ FitMultinomialAdmixedModelFindUnknowns<-function(DataArray,SampleCoordinates,Unk
 
 	NumberUnknowns=length(UnknownDataArray[,1,1])
 	AdmixtureFractions=array(0,dim=c(GridLength[1],GridLength[2],NumberUnknowns))
+	Loglikelihoods=array(0,dim=NumberUnknowns)
 
 	#AlleleFrequencySurfaces=array(0.,dim=c(MaxAlleles,GridLength[1],GridLength[2],NumberLoci))
-	#ResultsRaw=.Fortran("FITMULTINOMIALMODEL",AlleleFrequencySurfaces=as.double(AlleleFrequencySurfaces),DataArray=as.integer(DataArray),RhoParameter=as.double(RhoParameter),SampleSites=as.integer(SampleSites),GridLength=as.integer(GridLength),MaxGridLength=as.integer(MaxGridLength),MaxAlleles=as.integer(MaxAlleles),NumberLoci=as.integer(NumberLoci),SampleCoordinates=as.double(SampleCoordinates),AllelesAtLocus=as.integer(AllelesAtLocus),GridCoordinates=as.double(GridCoordinates))#,PACKAGE="OriGen")
+	#ResultsRaw=.Fortran("FITMULTINOMIALMODEL",AlleleFrequencySurfaces=as.double(AlleleFrequencySurfaces),DataArray=as.integer(DataArray),RhoParameter=as.double(RhoParameter),SampleSites=as.integer(SampleSites),GridLength=as.integer(GridLength),MaxGridLength=as.integer(MaxGridLength),MaxAlleles=as.integer(MaxAlleles),NumberLoci=as.integer(NumberLoci),SampleCoordinates=as.double(SampleCoordinates),AllelesAtLocus=as.integer(AllelesAtLocus),GridCoordinates=as.double(GridCoordinates),PACKAGE="OriGen")
 
-	ResultsRaw=.Fortran("FITMULTIADMIXEDMODELFINDUNKNOWNS",AdmixtureFractions=as.double(AdmixtureFractions),DataArray=as.integer(DataArray),RhoParameter=as.double(RhoParameter),SampleSites=as.integer(SampleSites),GridLength=as.integer(GridLength),MaxGridLength=as.integer(MaxGridLength),MaxAlleles=as.integer(MaxAlleles),NumberLoci=as.integer(NumberLoci),SampleCoordinates=as.double(SampleCoordinates),GridCoordinates=as.double(GridCoordinates),AllelesAtLocus=as.integer(AllelesAtLocus),NumberUnknowns=as.integer(NumberUnknowns),UnknownDataArray=as.integer(UnknownDataArray),IsLand=as.logical(IsLand),PACKAGE="OriGen")
+	ResultsRaw=.Fortran("FITMULTIADMIXEDMODELFINDUNKNOWNS",AdmixtureFractions=as.double(AdmixtureFractions),DataArray=as.integer(DataArray),RhoParameter=as.double(RhoParameter),SampleSites=as.integer(SampleSites),GridLength=as.integer(GridLength),MaxGridLength=as.integer(MaxGridLength),MaxAlleles=as.integer(MaxAlleles),NumberLoci=as.integer(NumberLoci),SampleCoordinates=as.double(SampleCoordinates),GridCoordinates=as.double(GridCoordinates),AllelesAtLocus=as.integer(AllelesAtLocus),NumberUnknowns=as.integer(NumberUnknowns),UnknownDataArray=as.integer(UnknownDataArray),IsLand=as.logical(IsLand),Loglikelihoods=as.double(Loglikelihoods),PACKAGE="OriGen")
 
 	ResultsRaw$DataArray=array(ResultsRaw$DataArray,c(MaxAlleles,SampleSites,NumberLoci))
 	ResultsRaw$AdmixtureFractions=array(ResultsRaw$AdmixtureFractions,c(GridLength[1],GridLength[2],NumberUnknowns))
@@ -886,7 +937,7 @@ if(MaskWater){
 	#maxp=max(TempOb$Frequency)
 	p<-ggplot(TempOb,aes(Long,Lat))
 	}
-p+	annotation_map(map_data("world"), fill=NA, colour = "white",asp=TRUE)+
+p+	annotation_map(map_data("world"), fill=NA, colour = "white")+
 	geom_tile(aes(fill=Frequency),colour=NA,alpha=1) +
 	scale_fill_gradient(high = "#CFE8ED",low = "#0F4657",limits=c(minp,maxp)) +
 	annotation_map(map_data("world",boundary=TRUE), fill=NA, colour = "black", bg=par(bg=NA)) +
@@ -952,7 +1003,7 @@ if(SNPBool==FALSE & AlleleNumber == 0){
 		#maxp=max(TempOb$Frequency)
 		p<-ggplot(TempOb2,aes(Long,Lat))
 		}
-	p+annotation_map(map_data("world"), fill=NA, colour = "white",asp=TRUE)+
+	p+annotation_map(map_data("world"), fill=NA, colour = "white")+
 		geom_tile(aes(fill=Frequency),colour=NA,alpha=1) +
 		scale_fill_gradient(high = "#CFE8ED",low = "#0F4657",limits=c(minp,maxp)) +
 		annotation_map(map_data("world",boundary=TRUE), fill=NA, colour = "black", bg=par(bg=NA)) +
@@ -997,7 +1048,7 @@ if(SNPBool==FALSE & AlleleNumber == 0){
 		}
 
 		#temp2=data.frame(Frequency=as.vector(AlleleSurfaceOutput$Frequencies[AlleleNumber,,LocusNumber]),Long=as.vector(AlleleSurfaceOutput$SampleCoordinates[,1]),Lat=as.vector(AlleleSurfaceOutput$SampleCoordinates[,2]))
-	p+	annotation_map(map_data("world"), fill=NA, colour = "white",asp=TRUE)+
+	p+	annotation_map(map_data("world"), fill=NA, colour = "white")+
 		geom_tile(aes(fill=Frequency),colour=NA,alpha=1) +
 		scale_fill_gradient(high = "#CFE8ED",low = "#0F4657",limits=c(minp,maxp)) +
 		#geom_point(data=temp2,aes(Long,Lat,colour=Frequency)) +
@@ -1055,7 +1106,7 @@ if(SNPBool==FALSE & AlleleNumber == 0){
 #	#maxp=max(TempOb$Frequency)
 #	p<-ggplot(TempOb2,aes(Long,Lat))
 #	}
-#p+annotation_map(map_data("world"), fill=NA, colour = "white",asp=TRUE)+
+#p+annotation_map(map_data("world"), fill=NA, colour = "white")+
 #	geom_tile(aes(fill=Frequency),colour=NA,alpha=1) +
 #	scale_fill_gradient(high = "#CFE8ED",low = "#0F4657",limits=c(minp,maxp)) +
 #	annotation_map(map_data("world",boundary=TRUE), fill=NA, colour = "black", bg=par(bg=NA)) +
@@ -1100,7 +1151,7 @@ if(MaskWater){
 	maxp=max(TempOb$Probability)
 	p<-ggplot(TempOb,aes(Long,Lat))
 	}
-p+	annotation_map(map_data("world"), fill=NA, colour = "white",asp=TRUE)+
+p+	annotation_map(map_data("world"), fill=NA, colour = "white")+
 	geom_tile(aes(fill=Probability),colour=NA,alpha=1) +
 	scale_fill_gradient(high = "#CFE8ED",low = "#0F4657",limits=c(minp,maxp)) +
 	annotation_map(map_data("world",boundary=TRUE), fill=NA, colour = "black", bg=par(bg=NA)) +
@@ -1166,7 +1217,7 @@ p+	annotation_map(map_data("world"), fill=NA, colour = "white",asp=TRUE)+
 #BestLocations$Long=TempLong
 #BestLocations$Lat=TempLat
 #
-#p+	annotation_map(map_data("world"), fill=NA, colour = "white",asp=TRUE)+
+#p+	annotation_map(map_data("world"), fill=NA, colour = "white")+
 #	geom_tile(aes(fill=Probability),colour=NA,alpha=1) +
 #	scale_fill_gradient(high = "#CFE8ED",low = "#0F4657",limits=c(minp,maxp)) +
 #	annotation_map(map_data("world",boundary=TRUE), fill=NA, colour = "black", bg=par(bg=NA)) +
@@ -1217,7 +1268,7 @@ subdata=subset(TempOb,Fractions>=0.01)
 
 p<-ggplot(TempOb,aes(Long,Lat))
 p+theme(panel.background = element_rect(fill = "lightskyblue1")) +
-		annotation_map(map_data("world"), fill="darkolivegreen3", colour = "white",asp=TRUE)+
+		annotation_map(map_data("world"), fill="darkolivegreen3", colour = "white")+
 		annotation_map(map_data("world"),fill="NA",col="grey10") +
 		theme(legend.position="none") +
 		geom_text(aes(label=Rounded),alpha=0,size=4) +
