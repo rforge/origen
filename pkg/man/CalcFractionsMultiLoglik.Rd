@@ -70,7 +70,8 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 #Data generation
 NumberUnknowns = 50
 NumberLoci = 10
-TestUnknownDataArray=array(sample(1:5,2*NumberUnknowns*NumberLoci,replace=TRUE),dim=c(NumberUnknowns,2,NumberLoci))
+TestUnknownDataArray=array(sample(1:5,2*NumberUnknowns*NumberLoci,replace=TRUE)
+	,dim=c(NumberUnknowns,2,NumberLoci))
 
 CalcFractionsMultiLoglik(TestUnknownDataArray)
 
