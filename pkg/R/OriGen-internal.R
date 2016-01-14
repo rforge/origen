@@ -826,7 +826,7 @@ FitMultinomialAdmixedModelFindUnknowns<-function(DataArray,SampleCoordinates,Unk
 #This function requires the maps package to work
 .IsLand<-function(x.vec,y.vec){
 	#require("maps")
-	temp.vec=map.where(database="world",x.vec,y.vec)
+	temp.vec=maps::map.where(database="world",x.vec,y.vec)
 	result.vec=x.vec*0+1
 	for(i in 1:length(temp.vec)){
 		if(is.na(temp.vec[i])){
@@ -859,7 +859,7 @@ FitMultinomialAdmixedModelFindUnknowns<-function(DataArray,SampleCoordinates,Unk
 	temp.mat=mat.or.vec(nc=longcount,nr=latcount)
 	temp.mat[,]=1
 	for(i in 1:longcount){
-		temp.mat[,i]=.IsLand(rep(GridCoordinates[i,1],each=latcount),GridCoordinates[,2])
+		temp.mat[,i]=OriGen:::.IsLand(rep(GridCoordinates[i,1],each=latcount),GridCoordinates[,2])
 		}
 	#write.table(temp.mat[latcount:1,],file="GridCoordSquare40Water.txt",append=FALSE,sep=" ",row.names=FALSE,col.names=FALSE)
 	return(temp.mat)
@@ -869,7 +869,7 @@ FitMultinomialAdmixedModelFindUnknowns<-function(DataArray,SampleCoordinates,Unk
 #This function requires the maps package to work
 .IsLandBool<-function(x.vec,y.vec){
 	#require("maps")
-	temp.vec=map.where(database="world",x.vec,y.vec)
+	temp.vec=maps::map.where(database="world",x.vec,y.vec)
 	result.vec=x.vec
 	result.vec[]=TRUE
 	for(i in 1:length(temp.vec)){
@@ -889,7 +889,7 @@ FitMultinomialAdmixedModelFindUnknowns<-function(DataArray,SampleCoordinates,Unk
 	temp.mat=mat.or.vec(nr=GridLength[1],nc=GridLength[2])
 	temp.mat[,]=TRUE
 	for(i in 1:GridLength[1]){
-		temp.mat[i,]=.IsLandBool(rep(GridCoordinates[1,i],each=GridLength[2]),GridCoordinates[2,1:GridLength[2]])
+		temp.mat[i,]=OriGen:::.IsLandBool(rep(GridCoordinates[1,i],each=GridLength[2]),GridCoordinates[2,1:GridLength[2]])
 	}
 	return(temp.mat)
 }
@@ -902,47 +902,47 @@ FitMultinomialAdmixedModelFindUnknowns<-function(DataArray,SampleCoordinates,Unk
 
 
 PlotAlleleFrequencySurfaceOld<-function(AlleleSurfaceOutput,SNPNumber=1,MaskWater=TRUE){
-#GridCoordinates(2,MaxGridLength)
-print("Note that the maps package used for vectors here is outdated, this is particularly true in Europe.")
-#require("maps")
-#require("ggplot2")
+	#GridCoordinates(2,MaxGridLength)
+	print("Note that the maps package used for vectors here is outdated, this is particularly true in Europe.")
+	#require("maps")
+	#require("ggplot2")
 
-#note this next line is in the function merely to pass R checks.  It serves no other purpose.
-Land=Lat=Long=Frequency=NULL
+	#note this next line is in the function merely to pass R checks.  It serves no other purpose.
+	Land=Lat=Long=Frequency=NULL
 
-TempHM=AlleleSurfaceOutput$AlleleFrequencySurfaces[SNPNumber,,]
-for(i in 1:AlleleSurfaceOutput$GridLength[1]){
-	TempHM[i,]=AlleleSurfaceOutput$GridCoordinates[1,i]
-}
-TempOb<-data.frame(Frequency=as.vector(AlleleSurfaceOutput$AlleleFrequencySurfaces[SNPNumber,,]),Long=as.vector(TempHM))
-for(i in 1:AlleleSurfaceOutput$GridLength[2]){
-	TempHM[,i]=AlleleSurfaceOutput$GridCoordinates[2,i]
-}
-TempOb$Lat=as.vector(TempHM)
-TempOb$Land=.IsLand(TempOb$Long,TempOb$Lat)
-subdata=subset(TempOb,Land==1)
-#minp=min(subdata$Frequency)
-minp=0
-#maxp=max(subdata$Frequency)
-maxp=1
-if(MaskWater){
+	TempHM=AlleleSurfaceOutput$AlleleFrequencySurfaces[SNPNumber,,]
+	for(i in 1:AlleleSurfaceOutput$GridLength[1]){
+		TempHM[i,]=AlleleSurfaceOutput$GridCoordinates[1,i]
+	}
+	TempOb<-data.frame(Frequency=as.vector(AlleleSurfaceOutput$AlleleFrequencySurfaces[SNPNumber,,]),Long=as.vector(TempHM))
+	for(i in 1:AlleleSurfaceOutput$GridLength[2]){
+		TempHM[,i]=AlleleSurfaceOutput$GridCoordinates[2,i]
+	}
+	TempOb$Lat=as.vector(TempHM)
+	TempOb$Land=.IsLand(TempOb$Long,TempOb$Lat)
 	subdata=subset(TempOb,Land==1)
 	#minp=min(subdata$Frequency)
-	#minp=0
+	minp=0
 	#maxp=max(subdata$Frequency)
-	p<-ggplot(subset(TempOb,Land==1),aes(Long,Lat))
-	} else {
-	#minp=min(TempOb$Frequency)
-	#minp=0
-	#maxp=max(TempOb$Frequency)
-	p<-ggplot(TempOb,aes(Long,Lat))
-	}
-p+	annotation_map(map_data("world"), fill=NA, colour = "white")+
-	geom_tile(aes(fill=Frequency),colour=NA,alpha=1) +
-	scale_fill_gradient(high = "#CFE8ED",low = "#0F4657",limits=c(minp,maxp)) +
-	annotation_map(map_data("world",boundary=TRUE), fill=NA, colour = "black", bg=par(bg=NA)) +
-	ylab("Latitude") + ggtitle(paste0("Allele Frequency Surface SNP:",SNPNumber)) +
-	xlab("Longitude")
+	maxp=1
+	if(MaskWater){
+		subdata=subset(TempOb,Land==1)
+		#minp=min(subdata$Frequency)
+		#minp=0
+		#maxp=max(subdata$Frequency)
+		p<-ggplot2::ggplot(subset(TempOb,Land==1),aes(Long,Lat))
+		} else {
+		#minp=min(TempOb$Frequency)
+		#minp=0
+		#maxp=max(TempOb$Frequency)
+		p<-ggplot2::ggplot(TempOb,aes(Long,Lat))
+		}
+	p+	annotation_map(map_data("world"), fill=NA, colour = "white")+
+		geom_tile(aes(fill=Frequency),colour=NA,alpha=1) +
+		scale_fill_gradient(high = "#CFE8ED",low = "#0F4657",limits=c(minp,maxp)) +
+		annotation_map(map_data("world",boundary=TRUE), fill=NA, colour = "black", bg=par(bg=NA)) +
+		ylab("Latitude") + ggtitle(paste0("Allele Frequency Surface SNP:",SNPNumber)) +
+		xlab("Longitude")
 }
 
 
