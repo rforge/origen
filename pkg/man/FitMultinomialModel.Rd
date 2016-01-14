@@ -109,68 +109,72 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 #These examples are not run because they take a little more than 5 secs 
 #note - type example(FunctionName, run.dontrun=TRUE) to run the example where FunctionName is
 #the name of the function
+
 \dontrun{
-	##Data generation
-	SampleSites=10
-	NumberLoci=4
-	MaxAlleles=4
-	if(MaxAlleles==2){
-		NumberAllelesAtEachLocus=rep(2,NumberLoci)
-	}else{
-		NumberAllelesAtEachLocus=sample(2:MaxAlleles,NumberLoci,replace=TRUE)
+	
+##Data generation
+SampleSites=10
+NumberLoci=4
+MaxAlleles=4
+if(MaxAlleles==2){
+	NumberAllelesAtEachLocus=rep(2,NumberLoci)
+}else{
+	NumberAllelesAtEachLocus=sample(2:MaxAlleles,NumberLoci,replace=TRUE)
+}
+TestData=array(0,dim=c(MaxAlleles,SampleSites,NumberLoci))
+for(i in 1:NumberLoci){
+	for(j in 1:NumberAllelesAtEachLocus[i]){
+		TestData[j,,i]=sample(1:10,SampleSites,replace=TRUE)
 	}
-	TestData=array(0,dim=c(MaxAlleles,SampleSites,NumberLoci))
-	for(i in 1:NumberLoci){
-		for(j in 1:NumberAllelesAtEachLocus[i]){
-			TestData[j,,i]=sample(1:10,SampleSites,replace=TRUE)
-		}
+}
+##This data is simulated in Europe which is around Longitude -9 to 38 and Latitude 34 to 60
+TestCoordinates=array(0,dim=c(SampleSites,2))
+TestCoordinates[,1]=runif(SampleSites,-9,38)
+TestCoordinates[,2]=runif(SampleSites,34,60)
+
+##This simulates the unknown data
+NumberUnknowns=2
+UnknownData=array(0,dim=c(NumberUnknowns,2,NumberLoci))
+for(i in 1:NumberUnknowns){
+	for(j in 1:NumberLoci){
+		UnknownData[i,,j]=sample(1:NumberAllelesAtEachLocus[j],2)
 	}
-	##This data is simulated in Europe which is around Longitude -9 to 38 and Latitude 34 to 60
-	TestCoordinates=array(0,dim=c(SampleSites,2))
-	TestCoordinates[,1]=runif(SampleSites,-9,38)
-	TestCoordinates[,2]=runif(SampleSites,34,60)
+}
 
-	##This simulates the unknown data
-	NumberUnknowns=2
-	UnknownData=array(0,dim=c(NumberUnknowns,2,NumberLoci))
-	for(i in 1:NumberUnknowns){
-		for(j in 1:NumberLoci){
-			UnknownData[i,,j]=sample(1:NumberAllelesAtEachLocus[j],2)
-		}
-	}
+##MaxGridLength is the maximum number of boxes allowed to span the region in either direction
+##Note that this number was reduced to allow the example to run in less than 5 secs
+##RhoParameter is a tuning constant
+print("MaxGridLength is intentionally set really low for fast examples. 
+	Meaningful results will most likely require a higher value.")
 
-	##MaxGridLength is the maximum number of boxes allowed to span the region in either direction
-	##Note that this number was reduced to allow the example to run in less than 5 secs
-	##RhoParameter is a tuning constant
-	print("MaxGridLength is intentionally set really low for fast examples. 
-		Meaningful results will most likely require a higher value.")
+##Fits the allele frequency surfaces only
+SurfaceTrials=FitMultinomialModel(TestData,TestCoordinates,MaxGridLength=20,RhoParameter=10)
+str(SurfaceTrials)
+##Plotting the model
+PlotAlleleFrequencySurface(SurfaceTrials,LocusNumber=1,AlleleNumber=1,
+	MaskWater=TRUE,Scale=FALSE)
 
-	##Fits the allele frequency surfaces only
-	SurfaceTrials=FitMultinomialModel(TestData,TestCoordinates,MaxGridLength=20,RhoParameter=10)
-	str(SurfaceTrials)
-	##Plotting the model
-	PlotAlleleFrequencySurface(SurfaceTrials,LocusNumber=1,AlleleNumber=1,
-		MaskWater=TRUE,Scale=FALSE)
+##You can generate heatmaps of unknown individual's placements from with the allele
+##surfaces using GenerateHeatMaps or use FitMultinomialModelFindUnknowns
+#HeatMapTrials=GenerateHeatMaps(SurfaceTrials,UnknownData,NumberLoci=NumberLoci)
+##Plotting the unknown heat map
+#PlotUnknownHeatMap(HeatMapTrials,UnknownNumber=1,MaskWater=TRUE)
+	
+##Fitting the model and finding the unknown locations
+#UnknownTrials=FitMultinomialModelFindUnknowns(TestData,TestCoordinates,
+#	UnknownData,MaxGridLength=20,RhoParameter=10)
+#str(UnknownTrials)
+##Plotting the unknown heat map
+#PlotUnknownHeatMap(UnknownTrials,UnknownNumber=1,MaskWater=TRUE)
 
-	##You can generate heatmaps of unknown individual's placements from with the allele
-	##surfaces using GenerateHeatMaps or use FitMultinomialModelFindUnknowns
-	#HeatMapTrials=GenerateHeatMaps(SurfaceTrials,UnknownData,NumberLoci=NumberLoci)
-	##Plotting the unknown heat map
-	#PlotUnknownHeatMap(HeatMapTrials,UnknownNumber=1,MaskWater=TRUE)
-		
-	##Fitting the model and finding the unknown locations
-	#UnknownTrials=FitMultinomialModelFindUnknowns(TestData,TestCoordinates,
-	#	UnknownData,MaxGridLength=20,RhoParameter=10)
-	#str(UnknownTrials)
-	##Plotting the unknown heat map
-	#PlotUnknownHeatMap(UnknownTrials,UnknownNumber=1,MaskWater=TRUE)
+##Fitting the admixed model
+#AdmixedTrials=FitMultinomialAdmixedModelFindUnknowns(TestData,TestCoordinates,
+#	UnknownData,MaxGridLength=10,RhoParameter=10)
+##Plots the admixed surface disregarding fractions less than 0.01
+#PlotAdmixedSurface(AdmixedTrials,UnknownNumber=1)
 
-	##Fitting the admixed model
-	#AdmixedTrials=FitMultinomialAdmixedModelFindUnknowns(TestData,TestCoordinates,
-	#	UnknownData,MaxGridLength=10,RhoParameter=10)
-	##Plots the admixed surface disregarding fractions less than 0.01
-	#PlotAdmixedSurface(AdmixedTrials,UnknownNumber=1)
-	}
+}
+
 }
 
 

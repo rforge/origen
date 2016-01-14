@@ -112,37 +112,39 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 #this example not run because it takes longer than 5 secs
 #note - type example(FunctionName, run.dontrun=TRUE) to run the example where FunctionName is
 #the name of the function
+
 \dontrun{
-	##Data generation
-	SampleSites=10
-	NumberSNPs=4
-	TestData=array(sample(2*(1:30),2*SampleSites*NumberSNPs,replace=TRUE),
-		dim=c(2,SampleSites,NumberSNPs))
-	##This data is simulated in Europe which is around Longitude -9 to 38 and Latitude 34 to 60
-	TestCoordinates=array(0,dim=c(SampleSites,2))
-	TestCoordinates[,1]=runif(SampleSites,-9,38)
-	TestCoordinates[,2]=runif(SampleSites,34,60)
 
-	##This code simulates the number of major alleles the unknown individuals have.
-	NumberUnknowns=2
-	TestUnknowns=array(sample(0:2,NumberUnknowns*NumberSNPs,
-		replace=TRUE),dim=c(NumberUnknowns,NumberSNPs))
+##Data generation
+SampleSites=10
+NumberSNPs=4
+TestData=array(sample(2*(1:30),2*SampleSites*NumberSNPs,replace=TRUE),
+	dim=c(2,SampleSites,NumberSNPs))
+##This data is simulated in Europe which is around Longitude -9 to 38 and Latitude 34 to 60
+TestCoordinates=array(0,dim=c(SampleSites,2))
+TestCoordinates[,1]=runif(SampleSites,-9,38)
+TestCoordinates[,2]=runif(SampleSites,34,60)
 
-	##MaxGridLength is the maximum number of boxes allowed to span the region in either direction
-	##Note that this number was reduced to allow the example to run in less than 5 secs
-	##RhoParameter is a tuning constant
-	print("MaxGridLength is intentionally set really low for fast examples. 
-		Meaningful results will most likely require a higher value.")
+##This code simulates the number of major alleles the unknown individuals have.
+NumberUnknowns=2
+TestUnknowns=array(sample(0:2,NumberUnknowns*NumberSNPs,
+	replace=TRUE),dim=c(NumberUnknowns,NumberSNPs))
 
-	##Fitting the admixed model
-	##Note that MaxGridLength is intentionally set unusably low so that the example
-	##runs in under 5 seconds.  The default value of 20 is more reasonable in general
-	AdmixedTrials=FitAdmixedModelFindUnknowns(TestData,TestCoordinates,
-		TestUnknowns,MaxGridLength=8,RhoParameter=10)
-	##Plots the admixed surface disregarding fractions less than 0.01
-	PlotAdmixedSurface(AdmixedTrials,UnknownNumber=1)
+##MaxGridLength is the maximum number of boxes allowed to span the region in either direction
+##Note that this number was reduced to allow the example to run in less than 5 secs
+##RhoParameter is a tuning constant
+print("MaxGridLength is intentionally set really low for fast examples. 
+	Meaningful results will most likely require a higher value.")
 
-	}
+##Fitting the admixed model
+##Note that MaxGridLength is intentionally set unusably low so that the example
+##runs in under 5 seconds.  The default value of 20 is more reasonable in general
+AdmixedTrials=FitAdmixedModelFindUnknowns(TestData,TestCoordinates,
+	TestUnknowns,MaxGridLength=8,RhoParameter=10)
+##Plots the admixed surface disregarding fractions less than 0.01
+PlotAdmixedSurface(AdmixedTrials,UnknownNumber=1)
+
+}
 
 }
 
