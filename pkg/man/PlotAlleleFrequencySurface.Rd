@@ -113,31 +113,36 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 
 \examples{
 
-#Data generation
-SampleSites=10
-NumberLoci=4
-MaxAlleles=4
-NumberAllelesAtEachLocus=sample(2:MaxAlleles,NumberLoci,replace=TRUE)
+#this example not run because it takes a little longer than 5 secs
+#note - type example(FunctionName, run.dontrun=TRUE) to run the example where FunctionName is
+#the name of the function
+\dontrun{
+	#Data generation
+	SampleSites=10
+	NumberLoci=4
+	MaxAlleles=4
+	NumberAllelesAtEachLocus=sample(2:MaxAlleles,NumberLoci,replace=TRUE)
 
-TestData=array(0,dim=c(MaxAlleles,SampleSites,NumberLoci))
-for(i in 1:NumberLoci){
-	for(j in 1:NumberAllelesAtEachLocus[i]){
-		TestData[j,,i]=sample(1:10,SampleSites,replace=TRUE)
+	TestData=array(0,dim=c(MaxAlleles,SampleSites,NumberLoci))
+	for(i in 1:NumberLoci){
+		for(j in 1:NumberAllelesAtEachLocus[i]){
+			TestData[j,,i]=sample(1:10,SampleSites,replace=TRUE)
+		}
 	}
-}
-#Europe is about -9 to 38 and 34 to 60
-TestCoordinates=array(0,dim=c(SampleSites,2))
-TestCoordinates[,1]=runif(SampleSites,-9,38)
-TestCoordinates[,2]=runif(SampleSites,34,60)
+	#Europe is about -9 to 38 and 34 to 60
+	TestCoordinates=array(0,dim=c(SampleSites,2))
+	TestCoordinates[,1]=runif(SampleSites,-9,38)
+	TestCoordinates[,2]=runif(SampleSites,34,60)
 
-#Fitting the model
-#MaxGridLength is the maximum number of boxes allowed to span the region in either direction
-#RhoParameter is a tuning constant
-trials2=FitMultinomialModel(TestData,TestCoordinates,MaxGridLength=20,RhoParameter=10)
-str(trials2)
+	#Fitting the model
+	#MaxGridLength is the maximum number of boxes allowed to span the region in either direction
+	#RhoParameter is a tuning constant
+	trials2=FitMultinomialModel(TestData,TestCoordinates,MaxGridLength=20,RhoParameter=10)
+	str(trials2)
 
-#Plotting the model
-PlotAlleleFrequencySurface(trials2)
+	#Plotting the model
+	PlotAlleleFrequencySurface(trials2)
+	}
 
 }
 

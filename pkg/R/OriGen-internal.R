@@ -859,7 +859,7 @@ FitMultinomialAdmixedModelFindUnknowns<-function(DataArray,SampleCoordinates,Unk
 	temp.mat=mat.or.vec(nc=longcount,nr=latcount)
 	temp.mat[,]=1
 	for(i in 1:longcount){
-		temp.mat[,i]=OriGen:::.IsLand(rep(GridCoordinates[i,1],each=latcount),GridCoordinates[,2])
+		temp.mat[,i]=.IsLand(rep(GridCoordinates[i,1],each=latcount),GridCoordinates[,2])
 		}
 	#write.table(temp.mat[latcount:1,],file="GridCoordSquare40Water.txt",append=FALSE,sep=" ",row.names=FALSE,col.names=FALSE)
 	return(temp.mat)
@@ -889,7 +889,7 @@ FitMultinomialAdmixedModelFindUnknowns<-function(DataArray,SampleCoordinates,Unk
 	temp.mat=mat.or.vec(nr=GridLength[1],nc=GridLength[2])
 	temp.mat[,]=TRUE
 	for(i in 1:GridLength[1]){
-		temp.mat[i,]=OriGen:::.IsLandBool(rep(GridCoordinates[1,i],each=GridLength[2]),GridCoordinates[2,1:GridLength[2]])
+		temp.mat[i,]=.IsLandBool(rep(GridCoordinates[1,i],each=GridLength[2]),GridCoordinates[2,1:GridLength[2]])
 	}
 	return(temp.mat)
 }
@@ -996,12 +996,12 @@ if(SNPBool==FALSE & AlleleNumber == 0){
 		#minp=min(subdata$Frequency)
 		#minp=0
 		#maxp=max(subdata$Frequency)
-		p<-ggplot(subset(TempOb2,Land==1),aes(Long,Lat))
+		p<-ggplot2::ggplot(subset(TempOb2,Land==1),aes(Long,Lat))
 		} else {
 		#minp=min(TempOb$Frequency)
 		#minp=0
 		#maxp=max(TempOb$Frequency)
-		p<-ggplot(TempOb2,aes(Long,Lat))
+		p<-ggplot2::ggplot(TempOb2,aes(Long,Lat))
 		}
 	p+annotation_map(map_data("world"), fill=NA, colour = "white")+
 		geom_tile(aes(fill=Frequency),colour=NA,alpha=1) +
@@ -1039,12 +1039,12 @@ if(SNPBool==FALSE & AlleleNumber == 0){
 		#minp=min(subdata$Frequency)
 		#minp=0
 		#maxp=max(subdata$Frequency)
-		p<-ggplot(subset(TempOb,Land==1),aes(Long,Lat))
+		p<-ggplot2::ggplot(subset(TempOb,Land==1),aes(Long,Lat))
 		} else {
 		#minp=min(TempOb$Frequency)
 		#minp=0
 		#maxp=max(TempOb$Frequency)
-		p<-ggplot(TempOb,aes(Long,Lat))
+		p<-ggplot2::ggplot(TempOb,aes(Long,Lat))
 		}
 
 		#temp2=data.frame(Frequency=as.vector(AlleleSurfaceOutput$Frequencies[AlleleNumber,,LocusNumber]),Long=as.vector(AlleleSurfaceOutput$SampleCoordinates[,1]),Lat=as.vector(AlleleSurfaceOutput$SampleCoordinates[,2]))
@@ -1138,18 +1138,16 @@ TempOb$Land=.IsLand(TempOb$Long,TempOb$Lat)
 subdata=subset(TempOb,Land==1)
 #minp=min(subdata$Probability)
 minp=0
-maxp=max(subdata$Probability)
+maxp=1
 if(MaskWater){
 	subdata=subset(TempOb,Land==1)
 	#minp=min(subdata$Probability)
-	minp=0
 	maxp=max(subdata$Probability)
-	p<-ggplot(subset(TempOb,Land==1),aes(Long,Lat))
+	p<-ggplot2::ggplot(subset(TempOb,Land==1),aes(Long,Lat))
 	} else {
 	#minp=min(TempOb$Probability)
-	minp=0
 	maxp=max(TempOb$Probability)
-	p<-ggplot(TempOb,aes(Long,Lat))
+	p<-ggplot2::ggplot(TempOb,aes(Long,Lat))
 	}
 p+	annotation_map(map_data("world"), fill=NA, colour = "white")+
 	geom_tile(aes(fill=Probability),colour=NA,alpha=1) +
