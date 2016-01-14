@@ -130,7 +130,8 @@ NumberUnknowns=2
 TestUnknowns=array(sample(0:2,NumberUnknowns*NumberSNPs,
 	replace=TRUE),dim=c(NumberUnknowns,NumberSNPs))
 
-##MaxGridLength is the maximum number of boxes allowed to span the region in either direction
+##MaxGridLength is the maximum number of boxes allowed 
+##to span the region in either direction
 ##Note that this number was reduced to allow the example to run in less than 5 secs
 ##RhoParameter is a tuning constant
 print("MaxGridLength is intentionally set really low for fast examples. 

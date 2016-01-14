@@ -152,14 +152,16 @@ for(i in 1:NumberUnknowns){
 	}
 }
 
-##MaxGridLength is the maximum number of boxes allowed to span the region in either direction
+##MaxGridLength is the maximum number of boxes allowed 
+##to span the region in either direction
 ##Note that this number was reduced to allow the example to run in less than 5 secs
 ##RhoParameter is a tuning constant
 print("MaxGridLength is intentionally set really low for fast examples. 
 	Meaningful results will most likely require a higher value.")
 
 ##Fits the allele frequency surfaces only
-SurfaceTrials=FitMultinomialModel(TestData,TestCoordinates,MaxGridLength=20,RhoParameter=10)
+SurfaceTrials=FitMultinomialModel(TestData,TestCoordinates,
+	MaxGridLength=20,RhoParameter=10)
 str(SurfaceTrials)
 ##Plotting the model
 PlotAlleleFrequencySurface(SurfaceTrials,LocusNumber=1,AlleleNumber=1,
