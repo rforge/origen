@@ -101,6 +101,13 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 }
 
 \examples{
+
+#this example not run because it takes slightly longer than 5 secs
+#note - type example(FunctionName, run.dontrun=TRUE) to run the example where FunctionName is
+#the name of the function
+
+\dontrun{
+
 #Note see the help files for ConvertPEDData and ConvertUnknownPEDData if you have Plink PED files
 
 #Data generation
@@ -123,7 +130,7 @@ str(trials2)
 PlotAlleleFrequencySurface(trials2)
 
 }
-
+}
 
 \keyword{localization}% __ONLY ONE__ keyword per line
 \keyword{Ancestry}% __ONLY ONE__ keyword per line

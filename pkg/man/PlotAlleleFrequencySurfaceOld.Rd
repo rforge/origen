@@ -107,6 +107,12 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 
 \examples{
 
+#this example not run because it takes slightly longer than 5 secs
+#note - type example(FunctionName, run.dontrun=TRUE) to run the example where FunctionName is
+#the name of the function
+
+\dontrun{
+
 #Data generation
 SampleSites=10
 NumberSNPs=5
@@ -127,7 +133,7 @@ str(trials2)
 PlotAlleleFrequencySurfaceOld(trials2)
 
 }
-
+}
 
 \keyword{Localization}% __ONLY ONE__ keyword per line
 \keyword{Ancestry}% __ONLY ONE__ keyword per line
