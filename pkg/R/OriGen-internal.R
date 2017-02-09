@@ -5,19 +5,28 @@
 
 
 
-ConvertPEDData<-function(PlinkFileName,LocationFileName){
-#DataFileName should be the base name of plink ped/map format
-#DataArray[Alleles,SampleSites,NumberSNPs] Gives the grouped data
-#Location file should be space/tab delimited with columns Label,longitude,latitude
+ConvertPEDData <- function(PlinkFileName,LocationFileName){
+	#DataFileName should be the base name of plink ped/map format
+	#DataArray[Alleles,SampleSites,NumberSNPs] Gives the grouped data
+	#Location file should be space/tab delimited with columns Label,longitude,latitude
 	print("Note: This method assumes each geographical location in the location file has a unique character label in the first column.")
 	print('It also assumes the longitude and latitude columns are labeled "longitude" and "latitude".')
+
 	MAPFileName=paste(PlinkFileName,".map",sep="")
 	MAPData=read.table(MAPFileName,header=FALSE)
 	NumberSNPs=length(MAPData[[1]])
 	print(c("NumberSNPs",NumberSNPs))
 
 	LocationData=read.table(LocationFileName,header=TRUE)
-	SampleSites=nlevels(LocationData[[1]])
+	names(LocationData)[names(LocationData)=="Longitude"]="longitude"
+	names(LocationData)[names(LocationData)=="Latitude"]="latitude"
+	if(is.null(LocationData$latitude)|is.null(LocationData$longitude)){
+		print("Longitude and latitude not found in header of location file.  Please include a header(top row) labeling the columns.")
+		return()
+	}
+	LocationData$tempname=paste0(LocationData$longitude,LocationData$latitude)
+	LocationData$tempname=factor(LocationData$tempname)
+	SampleSites=nlevels(LocationData$tempname)
 	print(c("SampleSites",SampleSites))
 
 	PEDFileName=paste(PlinkFileName,".ped",sep="")
@@ -26,13 +35,13 @@ ConvertPEDData<-function(PlinkFileName,LocationFileName){
 
 	DataArray=array(0,c(2,SampleSites,NumberSNPs))
 	SampleCoordinates=array(0,c(SampleSites,2))
-	MembersList=levels(LocationData[[1]])
+	MembersList=levels(LocationData$tempname)
 
 	#Here we fill in the DataArray
 	#set up a vector dividing the sample sites
 	SampleSitesLogical=array(FALSE,c(SampleSites,NumberIndividuals))
 	for(i in 1:SampleSites){
-		SampleSitesLogical[i,]=(as.numeric(LocationData[[1]])==i)
+		SampleSitesLogical[i,]=(as.numeric(LocationData$tempname)==i)
 	}
 
 	for(j in 1:NumberSNPs){
@@ -68,14 +77,14 @@ ConvertPEDData<-function(PlinkFileName,LocationFileName){
 	foundVector=array(1,SampleSites)
 
 	#first one is free
-	temp=as.numeric(LocationData[[1]])[1]
+	temp=as.numeric(LocationData$tempname)[1]
 	SampleCoordinates[temp,1]=LocationData$longitude[1]
 	SampleCoordinates[temp,2]=LocationData$latitude[1]
 	foundVector[temp]=0
 
 	for(i in 2:NumberIndividuals){
 		if(sum(foundVector)>0){
-			temp=as.numeric(LocationData[[1]])[i]
+			temp=as.numeric(LocationData$tempname)[i]
 			if(foundVector[temp]){
 				SampleCoordinates[temp,1]=LocationData$longitude[i]
 				SampleCoordinates[temp,2]=LocationData$latitude[i]
@@ -84,16 +93,16 @@ ConvertPEDData<-function(PlinkFileName,LocationFileName){
 		}
 	}
 
-	ResultsRaw=list(DataArray=DataArray,SampleCoordinates=SampleCoordinates,Membership=as.numeric(LocationData[[1]]),MembersList=MembersList,SampleSites=SampleSites,NumberSNPs=NumberSNPs,NumberIndividuals=NumberIndividuals,PEDFileName=PEDFileName,MAPFileName=MAPFileName,LocationFileName=LocationFileName)
+	ResultsRaw=list(DataArray=DataArray,SampleCoordinates=SampleCoordinates,Membership=as.numeric(LocationData$tempname),MembersList=MembersList,SampleSites=SampleSites,NumberSNPs=NumberSNPs,NumberIndividuals=NumberIndividuals,PEDFileName=PEDFileName,MAPFileName=MAPFileName,LocationFileName=LocationFileName)
 
 	return(ResultsRaw)
 }
 
 
 FitOriGenModel<-function(DataArray,SampleCoordinates,MaxGridLength=20,RhoParameter=10){
-#DataArray[Alleles,SampleSites,NumberSNPs] Gives the grouped data
-#SampleCoordinates[SampleSites,2] gives the locations of the grouped data
-#This function takes in the data, fits the model, and returns the allele frequency surfaces
+	#DataArray[Alleles,SampleSites,NumberSNPs] Gives the grouped data
+	#SampleCoordinates[SampleSites,2] gives the locations of the grouped data
+	#This function takes in the data, fits the model, and returns the allele frequency surfaces
 	if(!.is.wholenumber(MaxGridLength)){
 		stop("MaxGridLength must be an integer")
 	}
@@ -121,8 +130,8 @@ FitOriGenModel<-function(DataArray,SampleCoordinates,MaxGridLength=20,RhoParamet
 
 	ResultsRaw$AlleleFrequencySurfaces=array(ResultsRaw$AlleleFrequencySurfaces,c(NumberSNPs,GridLength[1],GridLength[2]))
 	ResultsRaw$DataArray=array(ResultsRaw$DataArray,c(2,SampleSites,NumberSNPs))
-ResultsRaw$SampleCoordinates=array(ResultsRaw$SampleCoordinates,c(SampleSites,2))
-ResultsRaw$GridCoordinates=array(ResultsRaw$GridCoordinates,c(2,MaxGridLength))
+	ResultsRaw$SampleCoordinates=array(ResultsRaw$SampleCoordinates,c(SampleSites,2))
+	ResultsRaw$GridCoordinates=array(ResultsRaw$GridCoordinates,c(2,MaxGridLength))
 
 	return(ResultsRaw)
 }
@@ -132,9 +141,9 @@ ResultsRaw$GridCoordinates=array(ResultsRaw$GridCoordinates,c(2,MaxGridLength))
 
 
 ConvertUnknownPEDData<-function(PlinkFileName,LocationFileName,PlinkUnknownFileName){
-#DataFileName should be the base name of plink ped/map format
-#DataArray[Alleles,SampleSites,NumberSNPs] Gives the grouped data
-#Location file should be space/tab delimited with columns Label,longitude,latitude
+	#DataFileName should be the base name of plink ped/map format
+	#DataArray[Alleles,SampleSites,NumberSNPs] Gives the grouped data
+	#Location file should be space/tab delimited with columns Label,longitude,latitude
 
 	print("Note: This method assumes each geographical location in the location file has a unique character label in the first column.")
 	print('It also assumes the longitude and latitude columns are labeled "longitude" and "latitude".')
@@ -144,7 +153,15 @@ ConvertUnknownPEDData<-function(PlinkFileName,LocationFileName,PlinkUnknownFileN
 	print(c("NumberSNPs",NumberSNPs))
 
 	LocationData=read.table(LocationFileName,header=TRUE)
-	SampleSites=nlevels(LocationData[[1]])
+	names(LocationData)[names(LocationData)=="Longitude"]="longitude"
+	names(LocationData)[names(LocationData)=="Latitude"]="latitude"
+	if(is.null(LocationData$latitude)|is.null(LocationData$longitude)){
+		print("Longitude and latitude not found in header of location file.  Please include a header(top row) labeling the columns.")
+		return()
+	}
+	LocationData$tempname=paste0(LocationData$longitude,LocationData$latitude)
+	LocationData$tempname=factor(LocationData$tempname)
+	SampleSites=nlevels(LocationData$tempname)
 	print(c("SampleSites",SampleSites))
 
 	PEDFileName=paste(PlinkFileName,".ped",sep="")
@@ -169,7 +186,7 @@ ConvertUnknownPEDData<-function(PlinkFileName,LocationFileName,PlinkUnknownFileN
 	#set up a vector dividing the sample sites
 	SampleSitesLogical=array(FALSE,c(SampleSites,NumberIndividuals))
 	for(i in 1:SampleSites){
-		SampleSitesLogical[i,]=(as.numeric(LocationData[[1]])==i)
+		SampleSitesLogical[i,]=(as.numeric(LocationData$tempname)==i)
 	}
 
 	for(j in 1:NumberSNPs){
@@ -210,14 +227,14 @@ ConvertUnknownPEDData<-function(PlinkFileName,LocationFileName,PlinkUnknownFileN
 	foundVector=array(1,SampleSites)
 
 	#first one is free
-	temp=as.numeric(LocationData[[1]])[1]
+	temp=as.numeric(LocationData$tempname)[1]
 	SampleCoordinates[temp,1]=LocationData$longitude[1]
 	SampleCoordinates[temp,2]=LocationData$latitude[1]
 	foundVector[temp]=0
 
 	for(i in 2:NumberIndividuals){
 		if(sum(foundVector)>0){
-			temp=as.numeric(LocationData[[1]])[i]
+			temp=as.numeric(LocationData$tempname)[i]
 			if(foundVector[temp]){
 				SampleCoordinates[temp,1]=LocationData$longitude[i]
 				SampleCoordinates[temp,2]=LocationData$latitude[i]
@@ -226,7 +243,7 @@ ConvertUnknownPEDData<-function(PlinkFileName,LocationFileName,PlinkUnknownFileN
 		}
 	}
 
-	ResultsRaw=list(DataArray=DataArray,UnknownData=UnknownData,SampleCoordinates=SampleCoordinates,Membership=as.numeric(LocationData[[1]]),MembersList=MembersList,SampleSites=SampleSites,NumberSNPs=NumberSNPs,NumberIndividuals=NumberIndividuals,NumberUnknowns=NumberUnknowns,PEDFileName=PEDFileName,MAPFileName=MAPFileName,LocationFileName=LocationFileName)
+	ResultsRaw=list(DataArray=DataArray,UnknownData=UnknownData,SampleCoordinates=SampleCoordinates,Membership=as.numeric(LocationData$tempname),MembersList=MembersList,SampleSites=SampleSites,NumberSNPs=NumberSNPs,NumberIndividuals=NumberIndividuals,NumberUnknowns=NumberUnknowns,PEDFileName=PEDFileName,MAPFileName=MAPFileName,LocationFileName=LocationFileName,UnknownFileName=UnknownFileName)
 
 	return(ResultsRaw)
 }
@@ -234,11 +251,11 @@ ConvertUnknownPEDData<-function(PlinkFileName,LocationFileName,PlinkUnknownFileN
 
 
 FitOriGenModelFindUnknowns<-function(DataArray,SampleCoordinates,UnknownData,MaxGridLength=20,RhoParameter=10){
-#DataArray[Alleles,SampleSites,NumberSNPs] Gives the grouped data
-#by jmor
-#SampleCoordinates[SampleSites,2] gives the locations of the grouped data
-#UnknownData[NumberUnknowns,NumberSNPs] gives the number of major alleles for the current unknown individual
-#This function takes in the data, fits the model, and returns the allele frequency surfaces
+	#DataArray[Alleles,SampleSites,NumberSNPs] Gives the grouped data
+	#by jmor
+	#SampleCoordinates[SampleSites,2] gives the locations of the grouped data
+	#UnknownData[NumberUnknowns,NumberSNPs] gives the number of major alleles for the current unknown individual
+	#This function takes in the data, fits the model, and returns the allele frequency surfaces
 	if(!.is.wholenumber(MaxGridLength)){
 		stop("MaxGridLength must be an integer")
 	}
