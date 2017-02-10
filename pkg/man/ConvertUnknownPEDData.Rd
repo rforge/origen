@@ -14,11 +14,11 @@ ConvertUnknownPEDData(PlinkFileName,LocationFileName,PlinkUnknownFileName)
 \arguments{
   \item{PlinkFileName}{Base name of Plink PED file (i.e. without ".ped" or ".map") containing the individuals with known locations.}
 
-  \item{LocationFileName}{Space or tab delimited text file with Longitude and Latitude coordinates for each individual listed in the 4th and 5th columns respectively.  Note that rows should correspond to the individuals in the Plink File.  Also, this file should have a header row.}
-  
+  \item{LocationFileName}{Space or tab delimited text file with Longitude and Latitude coordinates for each individual.  Note that rows should correspond to the individuals in the Plink File.  Also, this file should have a header row with labels "Longitude" and "Latitude" for some column in the header.}
+
   \item{PlinkUnknownFileName}{Base name of Plink PED file (i.e. without ".ped" or ".map") containing the individuals with unknown locations.}
-  
- 
+
+
 }
 
 \value{
@@ -82,9 +82,9 @@ John Michael Ranola, John Novembre, and Kenneth Lange
 
 \examples{
 
-#Note that Plink files "10SNPs.ped", "10SNPs.map" and also "Locations.txt" 
+#Note that Plink files "10SNPs.ped", "10SNPs.map" and also "Locations.txt"
 #are included in the data folder of the OriGen package with ".txt" appended to the Plink files.
-#Please remove ".txt" and navigate to the appropriate location   
+#Please remove ".txt" and navigate to the appropriate location
 #before testing the following commands.
 #Note that this was done to allow inclusion of the test data in the package.
 

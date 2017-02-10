@@ -30,7 +30,7 @@ ConvertPEDData <- function(PlinkFileName,LocationFileName){
 	print(c("SampleSites",SampleSites))
 
 	PEDFileName=paste(PlinkFileName,".ped",sep="")
-	PEDData=read.table(PEDFileName,header=FALSE)
+	PEDData=read.table(PEDFileName,header=FALSE, colClasses=c(rep("numeric", 6), rep("factor", NumberSNPs*2)))
 	NumberIndividuals=length(PEDData[[1]])
 
 	DataArray=array(0,c(2,SampleSites,NumberSNPs))
@@ -165,7 +165,7 @@ ConvertUnknownPEDData<-function(PlinkFileName,LocationFileName,PlinkUnknownFileN
 	print(c("SampleSites",SampleSites))
 
 	PEDFileName=paste(PlinkFileName,".ped",sep="")
-	PEDData=read.table(PEDFileName,header=FALSE)
+	PEDData=read.table(PEDFileName,header=FALSE, colClasses=c(rep("numeric", 6), rep("factor", NumberSNPs*2)))
 	NumberIndividuals=length(PEDData[[1]])
 
 	UnknownFileName=paste(PlinkUnknownFileName,".ped",sep="")
@@ -174,7 +174,7 @@ ConvertUnknownPEDData<-function(PlinkFileName,LocationFileName,PlinkUnknownFileN
 
 	DataArray=array(0,c(2,SampleSites,NumberSNPs))
 	SampleCoordinates=array(0,c(SampleSites,2))
-	MembersList=levels(LocationData[[1]])
+	MembersList=levels(LocationData$tempname)
 	UnknownData=array(0,c(NumberUnknowns,NumberSNPs))
 
 	#performs a check to see whether there is the same number of SNPs in PlinkFileName and PlinkUnknownFileName
@@ -194,6 +194,9 @@ ConvertUnknownPEDData<-function(PlinkFileName,LocationFileName,PlinkUnknownFileN
 		bothlevels=union(levels(PEDData[[6+k]]),levels(PEDData[[7+k]]))
 		PEDData[[6+k]]=factor(PEDData[[6+k]],levels=bothlevels)
 		PEDData[[7+k]]=factor(PEDData[[7+k]],levels=bothlevels)
+		if(j %% 1000){
+			print(c("SNP Number: ", j))
+		}
 
 		counter=1
 		if(length(bothlevels)==3){
