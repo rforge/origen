@@ -43,7 +43,7 @@ List with the following components:
 
 %\item{DataArray}{An array giving the number of major/minor SNPs (defined as the most occuring in the dataset) grouped by sample sites for each SNP.  The dimension of this array is [2,SampleSites,NumberSNPs].}
 
-\item{RankedSNPs}{An integer valued vector giving the positions in order of LRT based ranking of each SNP.  In other words, the first number is the SNP position with the highest ranking.  This is NOT the ranking of the first SNP.  This can be used to reduce the number of SNPs to use for assignment if analysis takes too long.}
+\item{RankedSNPs}{An integer valued vector giving the positions in order of LRT based ranking of each SNP.  In other words, the first number is the SNP position with the lowest ranking.  This is NOT the ranking of the first SNP.  This can be used to reduce the number of SNPs to use for assignment if analysis takes too long.}
 
 \item{LRT}{This is a real valued array giving the Likelihood Ratio test statistic for each SNP.}
 
