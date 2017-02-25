@@ -30,7 +30,7 @@ ConvertPEDData <- function(PlinkFileName,LocationFileName){
 	print(c("SampleSites",SampleSites))
 
 	PEDFileName=paste(PlinkFileName,".ped",sep="")
-	PEDData=read.table(PEDFileName,header=FALSE, colClasses=c(rep("numeric", 6), rep("factor", NumberSNPs*2)))
+	PEDData=read.table(PEDFileName,header=FALSE, colClasses=c(rep("factor", 4), rep("numeric", 2), rep("factor", NumberSNPs*2)))
 	NumberIndividuals=length(PEDData[[1]])
 
 	DataArray=array(0,c(2,SampleSites,NumberSNPs))
@@ -469,7 +469,8 @@ RankSNPsLRT<-function(DataArray){
 
 	ResultsRaw$DataArray=array(ResultsRaw$DataArray,c(2,SampleSites,NumberSNPs))
 	ResultsRaw$LRT=array(ResultsRaw$LRT,c(2,NumberSNPs))
-	return(ResultsRaw)
+	ResultsCleaned=list(RankedSNPs=ResultsRaw$Rankings, LRT=ResultsRaw$LRT[1,], Informativeness=ResultsRaw$LRT[2,], SampleSites=ResultsRaw$SampleSites, NumberSNPs=ResultsRaw$NumberSNPs)
+	return(ResultsCleaned)
 }
 
 

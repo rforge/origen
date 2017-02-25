@@ -4,7 +4,7 @@
 Rank the SNPs based on the likelihood ratio test.
 }
 \description{
-This function ranks the SNPs based on the likelihood ratio test comparing the data grouped into the different sample sites as inputted vs one large sample including all of the sites.  To convert the data see \code{\link{ConvertPEDData}}.
+This function ranks the SNPs based on the likelihood ratio test comparing the data grouped into the different sample sites as inputted vs one large sample including all of the sites.  For convenience it also calculates the informativeness for assignment.  To convert the data see \code{\link{ConvertPEDData}}.
 }
 \usage{
 RankSNPsLRT(DataArray)
@@ -15,21 +15,21 @@ RankSNPsLRT(DataArray)
 	%\item{AlleleSurfaceOutput}{The output of \code{\link{FitOriGenModel}}}
 	%\item{SNPNumber}{Integer indicating the SNP number to plot.}
 	%\item{MaskWater}{Logical value that if true removes water from the plotted regions.}
-	
+
 %	\item{PlinkFileName}{Base name of Plink PED file (i.e. without ".ped" or ".map") }
 
 %  \item{LocationFileName}{Space or tab delimited text file with Longitude and Latitude coordinates for each individual listed in the 4th and 5th columns respectively.  Note that rows should correspond to the individuals in the Plink File.  Also, this file should have a header row.}
-	
+
 	\item{DataArray}{An array giving the number of major/minor SNPs (defined as the most occuring in the dataset) grouped by sample sites for each SNP.  The dimension of this array is [2,SampleSites,NumberSNPs].}
-	
+
 	%\item{SampleCoordinates}{This is an array which gives the longitude and latitude of each of the found sample sites.  The dimension of this array is [SampleSites,2], where the second dimension represents longitude and latitude respectively.}
-	
+
 	%\item{UnknownData}{An array showing the unknown individuals genetic data.  The dimension of this array is [NumberUnknowns,NumberSNPs].}
-	
+
   %\item{MaxGridLength}{An integer giving the maximum number of boxes to fill the longer side of the region.  Note that computation time increases quadratically as this number increases, but this number also should be high enough to separate different sample sites otherwise they will be binned together as a single site.}
 
   %\item{RhoParameter}{This is a real precision parameter weighting the amount of smoothing.  A higher value flattens out the surface while a lower value allows for more fluctuations.  The default value of 10 was used in our analysis and should prove a good starting point.  To choose a value by crossvalidation please see \code{\link{FindRhoParameterCrossValidation}}}
- 
+
 }
 
 \value{
@@ -41,7 +41,13 @@ List with the following components:
 
 %\item{AdmixtureFractions}{An array giving the admixture fraction from the given location.  In other words this is the fractional contribution of the location to the unknown individuals genetic data.  The dimension of this array is [NumberLongitudeDivisions,NumberLatitudeDivisions,NumberUnknowns], where either NumberLongitudeDivisions or NumberLatitudeDivisions is equal to MaxGridLength(an input to this function) and the other is scaled so that the geodesic distance between points horizontally and vertically is equal.}
 
-\item{DataArray}{An array giving the number of major/minor SNPs (defined as the most occuring in the dataset) grouped by sample sites for each SNP.  The dimension of this array is [2,SampleSites,NumberSNPs].}
+%\item{DataArray}{An array giving the number of major/minor SNPs (defined as the most occuring in the dataset) grouped by sample sites for each SNP.  The dimension of this array is [2,SampleSites,NumberSNPs].}
+
+\item{RankedSNPs}{An integer valued vector giving the positions in order of LRT based ranking of each SNP.  In other words, the first number is the SNP position with the highest ranking.  This is NOT the ranking of the first SNP.  This can be used to reduce the number of SNPs to use for assignment if analysis takes too long.}
+
+\item{LRT}{This is a real valued array giving the Likelihood Ratio test statistic for each SNP.}
+
+\item{Informativeness}{This is a real valued array giving the informativeness for assignment(Rosenberg) for each SNP.}
 
 \item{SampleSites}{This shows the integer number of sample sites found.}
 
@@ -70,10 +76,6 @@ List with the following components:
 %\item{Membership}{This is an integer valued vector showing the group number of each member of the inputted known group.  The dimension of this array is [NumberKnown].}
 
 %\item{NumberKnown}{This is an integer value showing the number of known found in the PlinkFileName.}
-
-\item{Rankings}{An integer valued vector giving the LRT based ranking of each SNP.  This can be used to reduce the number of SNPs to use for assignment if analysis takes too long.}
-
-\item{LRT}{This is a real valued array giving the Likelihood Ratio test statistic and the informativeness for assignment(Rosenberg) for each SNP.  The dimension of this array is [2,NumberSNPs].}
 
 %\item{IsLand}{This is a logical valued array that is TRUE when the given coordinates are over land and FALSE when over water.  The dimension of this array is [GridLength[1],GridLength[2]].}
 
