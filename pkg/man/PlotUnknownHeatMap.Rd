@@ -13,21 +13,21 @@ PlotUnknownHeatMap(HeatMapOutput,UnknownNumber=1,MaskWater=TRUE)
 %- maybe also 'usage' for other objects documented here.
 \arguments{
 	\item{HeatMapOutput}{The output of \code{\link{FitOriGenModelFindUnknowns}}}
-	\item{UnknownNumber}{Integer indicating the unknown individual heat map number to plot.}
+	\item{UnknownNumber}{Integer indicating the unknown individual heat map number to plot, "ALL" which would plot best locations for all samples, or "GROUP" which plots a heat map assuming the entire group came from a single location.}
 	\item{MaskWater}{Logical value that if true removes water from the plotted regions.}
-	
+
 %	\item{PlinkFileName}{Base name of Plink PED file (i.e. without ".ped" or ".map") }
 
 %  \item{LocationFileName}{Space or tab delimited text file with Longitude and Latitude coordinates for each individual listed in the 4th and 5th columns respectively.  Note that rows should correspond to the individuals in the Plink File.  Also, this file should have a header row.}
-	
+
 	%\item{DataArray}{An array giving the number of major/minor SNPs (defined as the most occuring in the dataset) grouped by sample sites for each SNP.  The dimension of this array is [2,SampleSites,NumberSNPs].}
-	
+
 	%\item{SampleCoordinates}{This is an array which gives the longitude and latitude of each of the found sample sites.  The dimension of this array is [SampleSites,2], where the second dimension represents longitude and latitude respectively.}
-	
+
   %\item{MaxGridLength}{An integer giving the maximum number of boxes to fill the longer side of the region.  Note that computation time increases quadratically as this number increases, but this number also should be high enough to separate different sample sites otherwise they will be binned together as a single site.}
 
   %\item{RhoParameter}{This is a real precision parameter weighting the amount of smoothing.  A higher value flattens out the surface while a lower value allows for more fluctuations.  The default value of 10 was used in our analysis and should prove a good starting point.  To choose a value by crossvalidation please see \code{\link{FindRhoParameterCrossValidation}}}
- 
+
 }
 
 \value{
@@ -137,6 +137,8 @@ str(trials4)
 
 #Plotting the unknown heat map
 PlotUnknownHeatMap(trials4,UnknownNumber=1,MaskWater=TRUE)
+# PlotUnknownHeatMap(trials4,UnknownNumber="ALL",MaskWater=TRUE)
+# PlotUnknownHeatMap(trials4,UnknownNumber="GROUP",MaskWater=TRUE)
 
 }
 }
