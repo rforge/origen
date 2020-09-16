@@ -165,7 +165,8 @@ ConvertUnknownPEDData<-function(PlinkFileName,LocationFileName,PlinkUnknownFileN
 	print(c("SampleSites",SampleSites))
 
 	PEDFileName=paste(PlinkFileName,".ped",sep="")
-	PEDData=read.table(PEDFileName,header=FALSE, colClasses=c(rep("numeric", 6), rep("factor", NumberSNPs*2)))
+	# PEDData=read.table(PEDFileName,header=FALSE, colClasses=c(rep("numeric", 6), rep("factor", NumberSNPs*2)))
+	PEDData=read.table(PEDFileName,header=FALSE, colClasses=c(rep("factor", 4), rep("numeric", 2), rep("factor", NumberSNPs*2)))
 	NumberIndividuals=length(PEDData[[1]])
 
 	UnknownFileName=paste(PlinkUnknownFileName,".ped",sep="")
@@ -194,7 +195,7 @@ ConvertUnknownPEDData<-function(PlinkFileName,LocationFileName,PlinkUnknownFileN
 		bothlevels=union(levels(PEDData[[6+k]]),levels(PEDData[[7+k]]))
 		PEDData[[6+k]]=factor(PEDData[[6+k]],levels=bothlevels)
 		PEDData[[7+k]]=factor(PEDData[[7+k]],levels=bothlevels)
-		if(j %% 1000){
+		if(j %% 500 == 0){
 			print(c("SNP Number: ", j))
 		}
 
@@ -846,6 +847,8 @@ FitMultinomialAdmixedModelFindUnknowns<-function(DataArray,SampleCoordinates,Unk
 
 #This function requires the maps package to work
 .IsLand<-function(x.vec,y.vec){
+	# x.vec is a vector of longitudes
+  # y.vec is a vector of latitudes
 	#require("maps")
 	temp.vec=maps::map.where(database="world",x.vec,y.vec)
 	result.vec=x.vec*0+1
@@ -858,37 +861,39 @@ FitMultinomialAdmixedModelFindUnknowns<-function(DataArray,SampleCoordinates,Unk
 }
 
 #this function requires the maps package to work
-.MaskWater<-function(GridCoordinates){
-	#this short code checks whether the given coordinates are in water and outputs a matrix with 1 meaning land
-	#and 0 meaning water...
-	#GridCoordinates should be a matrix[x,2] where x is the number of grid points and the first 2 is Long,Lat
-	ndiv=length(GridCoordinates[,1])
-	latcount=0
-	longcount=0
-	for(i in 1:ndiv){
-		if(GridCoordinates[i,2]>0.001){
-			latcount=latcount+1
-		}else if(GridCoordinates[i,2]< -0.001){
-			latcount=latcount+1
-		}
-		if(GridCoordinates[i,1]>0.001){
-			longcount=longcount+1
-		}else if(GridCoordinates[i,1]< -0.001){
-			longcount=longcount+1
-		}
-	}
-	temp.mat=mat.or.vec(nc=longcount,nr=latcount)
-	temp.mat[,]=1
-	for(i in 1:longcount){
-		temp.mat[,i]=.IsLand(rep(GridCoordinates[i,1],each=latcount),GridCoordinates[,2])
-		}
-	#write.table(temp.mat[latcount:1,],file="GridCoordSquare40Water.txt",append=FALSE,sep=" ",row.names=FALSE,col.names=FALSE)
-	return(temp.mat)
-}
+# .MaskWater<-function(GridCoordinates){
+# 	#this short code checks whether the given coordinates are in water and outputs a matrix with 1 meaning land
+# 	#and 0 meaning water...
+# 	#GridCoordinates should be a matrix[x,2] where x is the number of grid points and the first 2 is Long,Lat
+# 	ndiv=length(GridCoordinates[,1])
+# 	latcount=0
+# 	longcount=0
+# 	for(i in 1:ndiv){
+# 		if(GridCoordinates[i,2]>0.001){
+# 			latcount=latcount+1
+# 		}else if(GridCoordinates[i,2]< -0.001){
+# 			latcount=latcount+1
+# 		}
+# 		if(GridCoordinates[i,1]>0.001){
+# 			longcount=longcount+1
+# 		}else if(GridCoordinates[i,1]< -0.001){
+# 			longcount=longcount+1
+# 		}
+# 	}
+# 	temp.mat=mat.or.vec(nc=longcount,nr=latcount)
+# 	temp.mat[,]=1
+# 	for(i in 1:longcount){
+# 		temp.mat[,i]=.IsLand(rep(GridCoordinates[i,1],each=latcount),GridCoordinates[,2])
+# 		}
+# 	#write.table(temp.mat[latcount:1,],file="GridCoordSquare40Water.txt",append=FALSE,sep=" ",row.names=FALSE,col.names=FALSE)
+# 	return(temp.mat)
+# }
 
 
 #This function requires the maps package to work
 .IsLandBool<-function(x.vec,y.vec){
+	# x.vec is a vector of longitudes
+  # y.vec is a vector of latitudes
 	#require("maps")
 	temp.vec=maps::map.where(database="world",x.vec,y.vec)
 	result.vec=x.vec
@@ -1138,6 +1143,105 @@ if(SNPBool==FALSE & AlleleNumber == 0){
 
 
 PlotUnknownHeatMap<-function(HeatMapOutput,UnknownNumber=1,MaskWater=TRUE){
+  #GridCoordinates(2,MaxGridLength)
+  print("Note that the maps package used for vectors here is outdated, this is particularly true in Europe.")
+  #require("maps")
+  #require("ggplot2")
+
+  #note this next line is in the function merely to pass R checks.  It serves no other purpose.
+  Land=Lat=Long=Probability=NULL
+  DisplayText=paste0("Heat Map Surface Individual:",UnknownNumber)
+  HeatMapProbabilityGrid=HeatMapOutput$UnknownGrids[,,1]
+  WaterBooleanGrid=0*HeatMapOutput$UnknownGrids[,,1]+1
+
+  if(UnknownNumber %in% c("ALL","All","all")){
+    print("Displaying the best placements for all individuals.  In the case of a tie, the first location is shown.")
+    DisplayText="Best Individual Placements"
+
+    if(MaskWater){
+      for(i in 1:length(WaterBooleanGrid[,1])){
+        for(j in 1:length(WaterBooleanGrid[1,])){
+          WaterBooleanGrid[i,j]=.IsLand(HeatMapOutput$GridCoordinates[1,i],HeatMapOutput$GridCoordinates[2,j])
+          # WaterBooleanGrid[i,j]=IsLand(HeatMapOutput$GridCoordinates[1,i],HeatMapOutput$GridCoordinates[2,j])
+        }
+      }
+    }
+
+    MaxVals=rep(0, HeatMapOutput$NumberUnknowns)
+    LongVals=MaxVals
+    LatVals=MaxVals
+    for(i in 1:HeatMapOutput$NumberUnknowns){
+      TempGrid=HeatMapOutput$UnknownGrids[,,i]*WaterBooleanGrid
+      MaxVals[i]=max(TempGrid)
+      CoordIndex=which(TempGrid==MaxVals[i], arr.ind=TRUE)
+      LongVals[i]=HeatMapOutput$GridCoordinates[1,CoordIndex[1]]
+      LatVals[i]=HeatMapOutput$GridCoordinates[2,CoordIndex[2]]
+    }
+
+    ALLdf=data.frame(UnknownLabel=1:HeatMapOutput$NumberUnknowns, MaxVals, LongVals, LatVals)
+    p<-ggplot(ALLdf,aes(LongVals,LatVals))
+    p+	annotation_map(map_data("world",boundary=TRUE), colour = "black", bg=par(bg=NA)) +
+    #annotation_map(map_data("world"), fill=NA, colour = "white")+
+    	geom_text(aes(label=paste0(UnknownLabel))) +
+      xlim(min(HeatMapOutput$GridCoordinates[1,1:HeatMapOutput$GridLength[1]]), max(HeatMapOutput$GridCoordinates[1,1:HeatMapOutput$GridLength[1]])) +
+      ylim(min(HeatMapOutput$GridCoordinates[2,1:HeatMapOutput$GridLength[2]]), max(HeatMapOutput$GridCoordinates[2,1:HeatMapOutput$GridLength[2]])) +
+    	ylab("Latitude") + ggtitle(DisplayText) + xlab("Longitude")
+
+  }else{
+    if(UnknownNumber %in% c("GROUP", "Group", "group")){
+      print("Displaying the best placement for the entire group.  Use this method if you believe that all unknowns came from the same location.")
+      DisplayText="Heat Map Surface for Entire Group"
+      HeatMapProbabilityGrid[]=1
+      if(HeatMapOutput$NumberUnknowns>1){
+        for(i in 1:HeatMapOutput$NumberUnknowns){
+          HeatMapProbabilityGrid[]=HeatMapProbabilityGrid[]*HeatMapOutput$UnknownGrids[,,i]
+        }
+      }else{
+        HeatMapProbabilityGrid=HeatMapOutput$UnknownGrids[,,1]
+      }
+    }else if(UnknownNumber>=1 & UnknownNumber <= HeatMapOutput$NumberUnknowns){
+      print(paste0("Displaying heat map for individual ", UnknownNumber))
+      HeatMapProbabilityGrid=HeatMapOutput$UnknownGrids[,,UnknownNumber]
+    }else{
+      print(paste0("Invalid UnknownNumber parameter.  Please choose a number between 1 and ", HeatMapOutput$NumberUnknowns, " inclusive or set to 'ALL' or 'GROUP'."))
+    }
+
+
+    TempHM=HeatMapOutput$UnknownGrids[,,1]
+    for(i in 1:HeatMapOutput$GridLength[1]){
+    	TempHM[i,]=HeatMapOutput$GridCoordinates[1,i]
+    }
+    TempOb<-data.frame(Probability=as.vector(HeatMapProbabilityGrid),Long=as.vector(TempHM))
+
+    for(i in 1:HeatMapOutput$GridLength[2]){
+    	TempHM[,i]=HeatMapOutput$GridCoordinates[2,i]
+    }
+    TempOb$Lat=as.vector(TempHM)
+    TempOb$Land=.IsLand(TempOb$Long,TempOb$Lat)
+    # TempOb$Land=IsLand(TempOb$Long,TempOb$Lat)
+    subdata=subset(TempOb,Land==1)
+    #minp=min(subdata$Probability)
+    minp=0
+    maxp=1
+    if(MaskWater){
+    	subdata=subset(TempOb,Land==1)
+    	#minp=min(subdata$Probability)
+    	maxp=max(subdata$Probability)
+    	p<-ggplot2::ggplot(subset(TempOb,Land==1),aes(Long,Lat))
+    	} else {
+    	#minp=min(TempOb$Probability)
+    	maxp=max(TempOb$Probability)
+    	p<-ggplot2::ggplot(TempOb,aes(Long,Lat))
+    	}
+    p+	geom_tile(aes(fill=Probability),colour=NA,alpha=1) +
+      annotation_map(map_data("world",boundary=TRUE), colour = "black", bg=par(bg=NA)) +
+      # annotation_map(map_data("world"), fill=NA, colour = "white")+
+    	scale_fill_gradient(high = "#CFE8ED",low = "#0F4657",limits=c(minp,maxp)) +
+    	ylab("Latitude") + ggtitle(DisplayText) + xlab("Longitude")
+  }
+}
+
+PlotUnknownHeatMapOld<-function(HeatMapOutput,UnknownNumber=1,MaskWater=TRUE){
 #GridCoordinates(2,MaxGridLength)
 print("Note that the maps package used for vectors here is outdated, this is particularly true in Europe.")
 #require("maps")
@@ -1146,6 +1250,13 @@ print("Note that the maps package used for vectors here is outdated, this is par
 #note this next line is in the function merely to pass R checks.  It serves no other purpose.
 Land=Lat=Long=Probability=NULL
 
+if(UnknownNumber=="ALL"){
+
+}else if (UnknownNumber=="GROUP"){
+
+}else{
+
+}
 TempHM=HeatMapOutput$UnknownGrids[,,UnknownNumber]
 for(i in 1:HeatMapOutput$GridLength[1]){
 	TempHM[i,]=HeatMapOutput$GridCoordinates[1,i]
